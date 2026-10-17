@@ -109,6 +109,16 @@ STORAGES = {
     },
 }
 
+ALLOWED_HOSTS = [
+    '.vercel.app',
+    'localhost',
+    '127.0.0.1',
+]
+
+# Required for Django admin login & POST requests on modern Django versions:
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.vercel.app',
+]
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
