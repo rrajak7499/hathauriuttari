@@ -280,16 +280,10 @@ class BannerAdmin(admin.ModelAdmin):
         image_file = form.cleaned_data.get('image')
 
         # If a new image was chosen (new banner or replacing existing)
-        if image_file:
-            # 1. If replacing an existing banner's image, remove the old one from ImageKit
-            if change and obj.imagekit_file_id:
-                delete_from_imagekit(obj.imagekit_file_id)
-
-            # 2. Upload the new file to ImageKit
-            ik_data = upload_to_imagekit(image_file, image_file.name, folder="/banners")
-            obj.image_url = ik_data['url']
-            obj.imagekit_file_id = ik_data['file_id']
-
+        if 'image_file' in request.FILES:
+            uploaded_file = request.FILES['image_file']
+            res = upload_to_imagekit(uploaded_file, uploaded_file.name, folder="campus_features")
+            obj.image_url = res.url
         super().save_model(request, obj, form, change)
 
     def delete_model(self, request, obj):

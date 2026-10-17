@@ -378,9 +378,10 @@ class CustomCampusFeature(models.Model):
     description = models.TextField(
         help_text="Your own custom description and highlights"
     )
-    image = models.ImageField(
-        upload_to='custom_features/', 
-        help_text="Upload your own photograph or graphic"
+    image = models.URLField(
+        max_length=500, 
+        blank=True, 
+        help_text="Direct ImageKit URL (or upload below in Admin)"
     )
     
     # Custom appearance controls
