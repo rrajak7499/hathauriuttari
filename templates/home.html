@@ -245,36 +245,38 @@
 
     <div class="space-y-6">
       {% for item in facilities %}
-        <div class="bg-white border border-slate-200/80 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col {% cycle 'md:flex-row' 'md:flex-row-reverse' %} items-center group">
+        <div class="bg-white border border-slate-200/80 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col {% cycle 'md:flex-row' 'md:flex-row-reverse' as card_dir %} items-stretch group">
           
           <!-- Image Column (5/12 width) -->
-          <div class="md:w-5/12 w-full h-52 sm:h-64 overflow-hidden relative flex-shrink-0">
-            {% if item.image %}
-              <img 
-                src="{{ item.image.url }}" 
-                alt="{{ item.title }}" 
-                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              />
-            {% else %}
-              <div class="w-full h-full bg-slate-100 flex items-center justify-center text-slate-400">
-                <i class="bi bi-image text-3xl"></i>
-              </div>
-            {% endif %}
+<div class="md:w-5/12 w-full min-h-[220px] sm:min-h-[260px] h-auto overflow-hidden relative flex-shrink-0 bg-slate-100">
+  {% if item.image %}
+    <img 
+      src="{{ item.image.url|default:item.image }}" 
+      alt="{{ item.title }}" 
+      class="w-full h-full object-cover block group-hover:scale-105 transition-transform duration-500"
+      loading="lazy"
+    />
+  {% else %}
+    <div class="w-full h-full min-h-[220px] bg-slate-100 flex flex-col items-center justify-center text-slate-400 gap-2 p-6">
+      <i class="bi bi-image text-3xl"></i>
+      <span class="text-xs font-medium text-slate-400">No Image Available</span>
+    </div>
+  {% endif %}
 
-            <!-- Dynamic Category / Badge -->
-            {% if item.subtitle_badge or item.custom_badge or item.category_label %}
-              <span class="absolute top-3 {% cycle 'left-3' 'right-3' %} bg-slate-900/75 backdrop-blur-sm text-white text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider shadow-sm">
-                {{ item.subtitle_badge|default:item.custom_badge|default:item.category_label }}
-              </span>
-            {% endif %}
-          </div>
+  <!-- Dynamic Category / Badge -->
+  {% if item.subtitle_badge or item.custom_badge or item.category_label %}
+    <span class="absolute top-3 left-3 z-10 bg-slate-900/80 backdrop-blur-sm text-white text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider shadow-sm pointer-events-none">
+      {{ item.subtitle_badge|default:item.custom_badge|default:item.category_label }}
+    </span>
+  {% endif %}
+</div>
 
           <!-- Content Column (7/12 width) -->
-          <div class="md:w-7/12 p-6 sm:p-8 space-y-3">
+          <div class="md:w-7/12 p-6 sm:p-8 flex flex-col justify-center space-y-3">
             <h4 class="text-lg font-bold text-slate-900 uppercase tracking-wide">
               {{ item.title }}
             </h4>
-            <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+            <p class="text-xs sm:text-sm text-slate-600 leading-relaxed whitespace-pre-line">
               {{ item.description }}
             </p>
 

@@ -194,13 +194,23 @@ class CustomCampusFeatureAdmin(admin.ModelAdmin):
     )
 
     def preview_thumb(self, obj):
-        if obj.image:
+        # Determine the image field name (adjust 'image' or 'image_url' to match your model)
+        image_field = getattr(obj, 'image', None) or getattr(obj, 'image_url', None)
+
+        if not image_field:
+            return "No Image"
+
+        # If it's a Django FieldFile, use .url; if it's already a string URL, use it directly
+        url = getattr(image_field, 'url', image_field)
+
+        if isinstance(url, str) and url.strip():
             return format_html(
-                '<img src="{}" style="width: 70px; height: 42px; object-fit: cover; border-radius: 6px;" />', 
-                obj.image.url
+                '<img src="{}" style="height: 45px; width: 45px; object-fit: cover; border-radius: 6px;" />',
+                url
             )
-        return "-"
-    preview_thumb.short_description = "Image"
+        return "No Image"
+
+    preview_thumb.short_description = "Thumbnail"
 
 
 

@@ -14,7 +14,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / '.env')
 
 # Quick-start development settings - unsuitable for production
-SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-%o6b8%m4l#j7k)7otzbwozuu7tu_mngxbt4b#mcaxj_mm^e)(w')
+SECRET_KEY = os.getenv('SECRET_KEY','')
 
 DEBUG = True
 
@@ -80,15 +80,27 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'my_school.wsgi.application'
+# Parse DEBUG safely as a boolean
+DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 'yes')
 
-# Database
-DATABASES = {
-    'default': dj_database_url.config(
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
-        conn_max_age=600,
-        ssl_require=True
-    )
-}
+DATABASE_URL = os.getenv('DATABASE_URL')
+
+if DATABASE_URL and DATABASE_URL.strip():
+    DATABASES = {
+        'default': dj_database_url.parse(
+            DATABASE_URL,
+            conn_max_age=600,
+            ssl_require=True,
+        )
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+    
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
