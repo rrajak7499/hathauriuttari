@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+
+{% block title %}
+  {% if is_edit %}Edit Document{% else %}Add Document Link{% endif %} | Academic Portal
+{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+
+  <!-- Header Card -->
+  <div class="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 shadow-xs flex items-center justify-between gap-4 mb-6">
+    <div>
+      <div class="inline-flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-wider text-emerald-600 bg-emerald-50 border border-emerald-100/80 px-3 py-1 rounded-full shadow-2xs mb-1.5">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
+        Downloads Manager
+      </div>
+      <h1 class="text-2xl font-black text-slate-900 tracking-tight">
+        {% if is_edit %}Edit: {{ item.title }}{% else %}Link New Document{% endif %}
+      </h1>
+      <p class="text-xs text-slate-500 font-medium">Link a Google Drive file to make it downloadable on the school portal.</p>
+    </div>
+
+    <a href="{% url 'downloads' %}" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold uppercase tracking-wider transition shrink-0">
+      &larr; Back
+    </a>
+  </div>
+
+  <!-- Form Card -->
+  <form method="POST" class="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-10 shadow-xs space-y-5">
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <div class="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 font-semibold">
+        {{ form.non_field_errors.0 }}
+      </div>
+    {% endif %}
+
+    <!-- Document Title -->
+    <div>
+      <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-2">
+        Document Title *
+      </label>
+      <input type="text" 
+             name="title" 
+             id="{{ form.title.id_for_label }}"
+             value="{{ form.title.value|default:'' }}" 
+             required 
+             placeholder="e.g. Class 11th Admission Application Form (2026–27)" 
+             class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs sm:text-sm font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600 transition">
+      {% if form.title.errors %}
+        <span class="text-xs font-semibold text-rose-600 mt-1 block">{{ form.title.errors.0 }}</span>
+      {% endif %}
+    </div>
+
+    <!-- Category -->
+    <div>
+      <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-2">
+        Document Category *
+      </label>
+      <select name="category" 
+              id="{{ form.category.id_for_label }}"
+              class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600 transition cursor-pointer">
+        {% for val, label in form.category.field.choices %}
+          <option value="{{ val }}" {% if form.category.value == val %}selected{% endif %}>
+            {{ label }}
+          </option>
+        {% endfor %}
+      </select>
+      {% if form.category.errors %}
+        <span class="text-xs font-semibold text-rose-600 mt-1 block">{{ form.category.errors.0 }}</span>
+      {% endif %}
+    </div>
+
+    <!-- Google Drive Shareable Link -->
+    <div class="bg-gradient-to-br from-emerald-50/50 via-slate-50 to-teal-50/40 border border-emerald-100 rounded-3xl p-5 space-y-2.5">
+      <div class="flex items-center justify-between">
+        <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-800">
+          <i class="bi bi-google text-emerald-600"></i> Google Drive Shareable Link *
+        </label>
+        <span class="text-[10px] font-black uppercase tracking-wider text-emerald-700 bg-white border border-emerald-100 px-2.5 py-0.5 rounded-full">
+          Cloud File
+        </span>
+      </div>
+
+      <div class="relative">
+        <i class="bi bi-link-45deg absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-lg"></i>
+        <input type="url" 
+               name="drive_link" 
+               id="{{ form.drive_link.id_for_label }}"
+               value="{{ form.drive_link.value|default:'' }}" 
+               required
+               placeholder="https://drive.google.com/file/d/.../view?usp=sharing" 
+               class="w-full bg-white border border-slate-200 rounded-2xl pl-11 pr-4 py-3 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-600 transition shadow-2xs">
+      </div>
+
+      <div class="flex items-start gap-2 text-[11px] text-slate-500 font-medium bg-white/70 border border-white rounded-xl p-2.5">
+        <i class="bi bi-info-circle-fill text-emerald-500 mt-0.5 shrink-0"></i>
+        <span>In Google Drive, set access to <strong>"Anyone with the link can view"</strong> so students can open and download it.</span>
+      </div>
+
+      {% if is_edit and item.drive_link %}
+        <div class="pt-2 flex items-center gap-3 text-xs border-t border-emerald-100/70">
+          <span class="text-slate-500 font-bold text-[11px] uppercase tracking-wider">Current Link:</span>
+          <a href="{{ item.drive_link }}" target="_blank" rel="noopener noreferrer" class="text-emerald-700 hover:text-emerald-900 font-bold inline-flex items-center gap-1 hover:underline">
+            <i class="bi bi-box-arrow-up-right"></i> Preview
+          </a>
+          <a href="{{ item.direct_download_url }}" target="_blank" rel="noopener noreferrer" class="text-slate-600 hover:text-slate-900 font-bold inline-flex items-center gap-1 hover:underline">
+            <i class="bi bi-download"></i> Direct Download
+          </a>
+        </div>
+      {% endif %}
+
+      {% if form.drive_link.errors %}
+        <span class="text-xs font-semibold text-rose-600 mt-1 block">{{ form.drive_link.errors.0 }}</span>
+      {% endif %}
+    </div>
+
+    <!-- Description -->
+    <div>
+      <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-2">
+        Description / Guidelines (Optional)
+      </label>
+      <textarea name="description" 
+                id="{{ form.description.id_for_label }}"
+                rows="3" 
+                placeholder="Mention prerequisites, required documents, or submission guidelines..." 
+                class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600 transition leading-relaxed">{{ form.description.value|default:'' }}</textarea>
+      {% if form.description.errors %}
+        <span class="text-xs font-semibold text-rose-600 mt-1 block">{{ form.description.errors.0 }}</span>
+      {% endif %}
+    </div>
+
+    <!-- Active Status -->
+    <div class="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+      <div class="space-y-0.5">
+        <label for="{{ form.is_active.id_for_label }}" class="text-xs font-extrabold text-slate-900 uppercase tracking-wider block cursor-pointer select-none">
+          Active Availability
+        </label>
+        <p class="text-[11px] text-slate-500 font-medium">When disabled, this document will be hidden from regular visitors.</p>
+      </div>
+
+      <input type="checkbox" 
+             name="is_active" 
+             id="{{ form.is_active.id_for_label }}" 
+             {% if form.is_active.value or not is_edit %}checked{% endif %} 
+             class="w-5 h-5 text-emerald-600 rounded-lg border-slate-300 focus:ring-emerald-600 transition cursor-pointer">
+    </div>
+
+    <!-- Form Actions -->
+    <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+      <a href="{% url 'downloads' %}" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl text-xs font-bold uppercase tracking-wider transition">
+        Cancel
+      </a>
+      <button type="submit" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs font-black uppercase tracking-wider shadow-sm transition active:scale-95 cursor-pointer">
+        {% if is_edit %}Save Changes{% else %}Publish Document{% endif %}
+      </button>
+    </div>
+
+  </form>
+
+</div>
+{% endblock %}

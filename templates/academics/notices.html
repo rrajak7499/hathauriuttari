@@ -1,0 +1,263 @@
+{% extends 'base.html' %}
+
+{% block title %}Notice Board & Bulletins | U.M.V. Hathauri Uttari{% endblock %}
+
+{% block content %}
+
+<!-- Header Banner -->
+<section class="bg-slate-950 py-12 text-white border-b border-slate-800">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div>
+        <span class="text-xs font-bold uppercase tracking-wider text-red-400 bg-white/10 px-3 py-1 rounded-full">
+          Official Bulletin &bull; BSEB Patna
+        </span>
+        <h1 class="text-2xl sm:text-3xl font-black uppercase tracking-tight mt-2">
+          News, Announcements &amp; Notifications
+        </h1>
+        <p class="text-xs text-slate-400 mt-1">Uchcha Madhyamic Vidyalaya Hathauri Uttari, Baheri, Darbhanga</p>
+      </div>
+      <nav class="text-xs text-slate-400 font-semibold">
+        <a href="{% url 'home' %}" class="hover:text-red-400 transition-colors">Home</a> / <span class="text-white">Notices</span>
+      </nav>
+    </div>
+  </div>
+</section>
+
+<!-- Notice Board Section -->
+<section class="py-10 bg-slate-100 min-h-[70vh]">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="bg-white rounded-2xl shadow-xs border border-slate-200 p-6 space-y-6">
+      
+      <!-- Top Bar: Filter / Search Controls & Admin Create Action -->
+      <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+        
+        <div class="flex items-center gap-3 w-full sm:w-auto">
+          <!-- Entries per page -->
+          <div class="flex items-center gap-2 text-xs font-semibold text-slate-700">
+            <select id="entries-per-page" class="border border-slate-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-red-600 bg-slate-50">
+              <option value="10">10</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+              <option value="all">All</option>
+            </select>
+            <span class="hidden sm:inline">Per Page</span>
+          </div>
+
+          <!-- Live Search Input -->
+          <div class="flex items-center gap-2 text-xs font-semibold text-slate-700 flex-1 sm:flex-initial">
+            <input type="text" id="notice-search" placeholder="Search notices..." class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs w-full sm:w-64 focus:outline-none focus:ring-1 focus:ring-red-600 bg-slate-50"/>
+          </div>
+        </div>
+
+        <!-- Admin 'Add New Notice' Trigger -->
+        {% if is_admin or user.is_staff or user.is_superuser %}
+          <div class="w-full sm:w-auto flex justify-end">
+            <a href="{% url 'notice_create' %}" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition shadow-sm active:scale-95">
+              <i class="bi bi-plus-lg"></i> Add New Notice
+            </a>
+          </div>
+        {% endif %}
+
+      </div>
+
+      <!-- Single Responsive Notices Table -->
+      <div class="overflow-x-auto rounded-xl border border-slate-200/80 bg-white shadow-xs">
+        <table class="w-full text-left text-sm text-slate-700" id="notices-table">
+          <thead class="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wider text-slate-500">
+            <tr>
+              <th class="w-16 py-3.5 px-4 text-center">#</th>
+              <th class="py-3.5 px-5">Announcement</th>
+              <th class="w-36 py-3.5 px-4 text-right">Date</th>
+              {% if is_admin or user.is_staff or user.is_superuser %}
+                <th class="w-28 py-3.5 px-4 text-center">Actions</th>
+              {% endif %}
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100" id="notices-body">
+            {% for n in notices %}
+              <tr class="notice-row hover:bg-slate-50/70 transition-colors">
+                <!-- Counter -->
+                <td class="py-3 px-4 text-center font-mono text-sm text-slate-800">
+                  {{ forloop.counter }}
+                </td>
+
+                <!-- Notice Content with Google Drive Link -->
+                <td class="py-3 px-5">
+                  <div class="space-y-1">
+                    <div class="flex items-center gap-2 flex-wrap">
+                      {% if n.drive_link %}
+                        <!-- Opens Google Drive file directly in a new tab -->
+                        <a href="{{ n.drive_link }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-base font-semibold text-slate-900 hover:text-indigo-600 transition-colors group">
+                          <span>{{ n.title|capfirst }}</span>
+                          <i class="bi bi-box-arrow-up-right text-indigo-500 text-xs group-hover:text-indigo-700" title="Open Google Drive Document"></i>
+                        </a>
+                        <!-- Direct Download Button -->
+                        <a href="{{ n.direct_download_url }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition" title="Direct Download">
+                          <i class="bi bi-download"></i> PDF
+                        </a>
+                      {% else %}
+                        <span class="text-base font-semibold text-slate-900">{{ n.title|capfirst }}</span>
+                      {% endif %}
+
+                      <!-- Priority Badges -->
+                      {% if n.priority == 'urgent' %}
+                        <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-rose-100 text-rose-700 border border-rose-200">
+                          Urgent
+                        </span>
+                      {% elif n.priority == 'important' %}
+                        <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-200">
+                          Important
+                        </span>
+                      {% endif %}
+
+                      {% if not n.is_active and user.is_staff %}
+                        <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200">
+                          Hidden
+                        </span>
+                      {% endif %}
+                    </div>
+
+                    {% if n.content %}
+                      <p class="text-xs text-slate-500 leading-relaxed max-w-3xl line-clamp-2">
+                        {{ n.content|capfirst }}
+                      </p>
+                    {% endif %}
+                  </div>
+                </td>
+                <!-- Date -->
+                <td class="py-3 px-4 text-right font-medium text-xs text-slate-500 whitespace-nowrap">
+                  {{ n.publish_date|date:"d M Y" }}
+                </td>
+
+                <!-- Admin Action Controls -->
+                {% if is_admin or user.is_staff or user.is_superuser %}
+                  <td class="py-3 px-4 text-center whitespace-nowrap">
+                    <div class="inline-flex items-center gap-1.5">
+                      <!-- Edit Notice -->
+                      <a href="{% url 'notice_update' n.pk %}" class="p-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 transition shadow-2xs" title="Edit Notice">
+                        <i class="bi bi-pencil-square text-xs"></i>
+                      </a>
+
+                      <!-- Delete Notice -->
+                      <form method="post" action="{% url 'notice_delete' n.pk %}" onsubmit="return confirm('Permanently delete notice: {{ n.title }}?');" class="inline">
+                        {% csrf_token %}
+                        <button type="submit" class="p-1.5 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-600 transition shadow-2xs" title="Delete Notice">
+                          <i class="bi bi-trash-fill text-xs"></i>
+                        </button>
+                      </form>
+                    </div>
+                  </td>
+                {% endif %}
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="{% if is_admin or user.is_staff or user.is_superuser %}4{% else %}3{% endif %}" class="py-12 text-center text-xs text-slate-400">
+                  <i class="bi bi-journal-x text-3xl mb-1.5 block text-slate-300"></i>
+                  No active notices found.
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Footer Info & Pagination Controls -->
+      <div class="flex flex-col sm:flex-row justify-between items-center text-xs text-slate-500 gap-4 pt-2">
+        <span id="entry-summary">Showing {{ notices|length }} active announcements</span>
+        <div class="inline-flex rounded-md border border-slate-300 text-xs font-semibold overflow-hidden shadow-2xs">
+          <button id="prev-page" class="px-3 py-1 bg-white hover:bg-slate-50 text-slate-600 border-r border-slate-300 disabled:opacity-40" disabled>&laquo;</button>
+          <span id="current-page-num" class="px-3 py-1 bg-red-600 text-white font-bold">1</span>
+          <button id="next-page" class="px-3 py-1 bg-white hover:bg-slate-50 text-slate-600 disabled:opacity-40" disabled>&raquo;</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- Filter Search & Pagination Script -->
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('notice-search');
+    const rows = Array.from(document.querySelectorAll('.notice-row'));
+    const summary = document.getElementById('entry-summary');
+    const entriesSelect = document.getElementById('entries-per-page');
+    const prevBtn = document.getElementById('prev-page');
+    const nextBtn = document.getElementById('next-page');
+    const pageNumDisplay = document.getElementById('current-page-num');
+
+    let currentPage = 1;
+    let filteredRows = [...rows];
+
+    function renderTable() {
+      const perPageValue = entriesSelect.value;
+      const perPage = perPageValue === 'all' ? filteredRows.length : parseInt(perPageValue, 10);
+      const totalPages = Math.ceil(filteredRows.length / perPage) || 1;
+
+      if (currentPage > totalPages) currentPage = totalPages;
+      if (currentPage < 1) currentPage = 1;
+
+      // Hide all rows
+      rows.forEach(r => r.style.display = 'none');
+
+      // Slice visible rows for active pagination page
+      const start = (currentPage - 1) * perPage;
+      const end = start + perPage;
+      const visibleRows = filteredRows.slice(start, end);
+
+      visibleRows.forEach(r => r.style.display = '');
+
+      // Update counters & buttons
+      if (summary) {
+        summary.textContent = `Showing ${filteredRows.length ? start + 1 : 0} to ${Math.min(end, filteredRows.length)} of ${filteredRows.length} entries`;
+      }
+      if (pageNumDisplay) pageNumDisplay.textContent = currentPage;
+
+      if (prevBtn) prevBtn.disabled = currentPage <= 1;
+      if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
+    }
+
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        const term = e.target.value.toLowerCase().trim();
+        filteredRows = rows.filter(r => r.textContent.toLowerCase().includes(term));
+        currentPage = 1;
+        renderTable();
+      });
+    }
+
+    if (entriesSelect) {
+      entriesSelect.addEventListener('change', () => {
+        currentPage = 1;
+        renderTable();
+      });
+    }
+
+    if (prevBtn) {
+      prevBtn.addEventListener('click', () => {
+        if (currentPage > 1) {
+          currentPage--;
+          renderTable();
+        }
+      });
+    }
+
+    if (nextBtn) {
+      nextBtn.addEventListener('click', () => {
+        const perPageValue = entriesSelect.value;
+        const perPage = perPageValue === 'all' ? filteredRows.length : parseInt(perPageValue, 10);
+        const totalPages = Math.ceil(filteredRows.length / perPage);
+        if (currentPage < totalPages) {
+          currentPage++;
+          renderTable();
+        }
+      });
+    }
+
+    // Initial render
+    renderTable();
+  });
+</script>
+
+{% endblock %}

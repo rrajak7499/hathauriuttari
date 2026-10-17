@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% csrf_token %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+    <div>
+      <h1 class="text-2xl font-black text-slate-900 tracking-tight">Banner Management</h1>
+      <p class="text-xs text-slate-500">Create, prioritize, hide, or delete homepage hero banners.</p>
+    </div>
+    <a href="{% url 'banner_create' %}" class="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-sm transition active:scale-95">
+      <i class="bi bi-plus-lg"></i> Add New Banner
+    </a>
+  </div>
+
+  <div class="bg-white border border-slate-200/90 rounded-2xl shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs text-slate-700">
+        <thead class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+          <tr>
+            <th class="p-3.5 w-16 text-center">Order</th>
+            <th class="p-3.5 w-28">Preview</th>
+            <th class="p-3.5">Banner Details</th>
+            <th class="p-3.5 w-32 text-center">Status</th>
+            <th class="p-3.5 w-36 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for b in banners %}
+            <tr class="hover:bg-slate-50/70 transition">
+              <td class="p-3.5 text-center font-bold text-slate-900">{{ b.order }}</td>
+              <td class="p-3.5">
+                <img src="{{ b.image.url }}" alt="{{ b.title }}" class="w-20 h-10 object-cover rounded-lg border border-slate-200 shadow-2xs">
+              </td>
+              <td class="p-3.5">
+                <div class="font-bold text-slate-900 text-sm">{{ b.title }}</div>
+                {% if b.subtitle %}
+                  <div class="text-slate-500 text-[11px] truncate max-w-sm">{{ b.subtitle }}</div>
+                {% endif %}
+                {% if b.action_url %}
+                  <a href="{{ b.action_url }}" target="_blank" class="text-indigo-600 hover:underline text-[10px] inline-flex items-center gap-1 mt-0.5">
+                    Link: {{ b.button_text }} <i class="bi bi-box-arrow-up-right"></i>
+                  </a>
+                {% endif %}
+              </td>
+              <td class="p-3.5 text-center">
+                <form method="post" action="{% url 'banner_toggle_status' b.pk %}" class="inline">
+                  {% csrf_token %}
+                  <button type="submit" class="px-2.5 py-1 rounded-full text-[10px] font-bold border transition {% if b.is_active %}bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100{% else %}bg-slate-100 text-slate-500 border-slate-300 hover:bg-slate-200{% endif %}" title="Click to toggle visible / hidden">
+                    {% if b.is_active %}
+                      <i class="bi bi-eye-fill"></i> Visible
+                    {% else %}
+                      <i class="bi bi-eye-slash-fill"></i> Hidden
+                    {% endif %}
+                  </button>
+                </form>
+              </td>
+              <td class="p-3.5 text-right space-x-1.5">
+                <a href="{% url 'banner_update' b.pk %}" class="p-2 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 inline-block transition" title="Edit Banner">
+                  <i class="bi bi-pencil-square"></i>
+                </a>
+                <form method="post" action="{% url 'banner_delete' b.pk %}" onsubmit="return confirm('Permanently delete this banner?');" class="inline">
+                  {% csrf_token %}
+                  <button type="submit" class="p-2 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-600 inline-block transition" title="Delete Banner">
+                    <i class="bi bi-trash-fill"></i>
+                  </button>
+                </form>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="5" class="py-12 text-center text-slate-400">
+                <i class="bi bi-card-image text-3xl mb-1 block text-slate-300"></i>
+                No banners found. Create your first banner to feature it on the home slider.
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

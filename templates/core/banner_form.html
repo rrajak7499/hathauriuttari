@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-black text-slate-900 tracking-tight">
+        {% if is_edit %}Edit Banner: {{ banner.title }}{% else %}Create New Banner{% endif %}
+      </h1>
+      <p class="text-xs text-slate-500">Hero slider graphic, action URLs, and display order.</p>
+    </div>
+    <a href="{% url 'banner_manage' %}" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold uppercase transition">
+      &larr; Back
+    </a>
+  </div>
+
+  <form method="POST" enctype="multipart/form-data" class="bg-white border border-slate-200/90 rounded-2xl p-6 sm:p-8 shadow-sm space-y-4">
+    {% csrf_token %}
+
+    <div>
+      <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Banner Title *</label>
+      {{ form.title }}
+      <span class="text-xs text-rose-600">{{ form.title.errors.0 }}</span>
+    </div>
+
+    <div>
+      <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Subtitle / Tagline</label>
+      {{ form.subtitle }}
+      <span class="text-xs text-rose-600">{{ form.subtitle.errors.0 }}</span>
+    </div>
+
+    <div>
+      <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Upload Graphic / Image *</label>
+      {{ form.image }}
+      {% if banner and banner.image %}
+        <div class="mt-2">
+          <img src="{{ banner.image.url }}" alt="{{ banner.title }}" class="h-20 w-40 object-cover rounded-lg border border-slate-200">
+        </div>
+      {% endif %}
+      <span class="text-xs text-rose-600">{{ form.image.errors.0 }}</span>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Action Link (Optional URL)</label>
+        {{ form.action_url }}
+      </div>
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Button Text</label>
+        {{ form.button_text }}
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center pt-2">
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">Display Order</label>
+        {{ form.order }}
+        <p class="text-[10px] text-slate-400 mt-1">Lower order loads earlier (0, 1, 2...)</p>
+      </div>
+
+      <div class="flex items-center gap-2 pt-3">
+        {{ form.is_active }}
+        <label for="{{ form.is_active.id_for_label }}" class="text-xs font-bold text-slate-800 cursor-pointer">
+          Active (Visible on Homepage)
+        </label>
+      </div>
+    </div>
+
+    <div class="flex justify-end gap-3 pt-6 border-t border-slate-100">
+      <a href="{% url 'banner_manage' %}" class="px-4 py-2 border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl text-xs font-semibold">
+        Cancel
+      </a>
+      <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-sm transition active:scale-95">
+        {% if is_edit %}Save Changes{% else %}Publish Banner{% endif %}
+      </button>
+    </div>
+  </form>
+
+</div>
+{% endblock %}

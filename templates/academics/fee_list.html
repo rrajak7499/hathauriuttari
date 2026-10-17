@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card border-0 shadow-sm p-4">
+  <h4 class="fw-bold mb-3"><i class="bi bi-cash-stack me-2"></i>Fee Invoices & Collections</h4>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Student</th>
+          <th>Invoice Title</th>
+          <th>Due Date</th>
+          <th>Total</th>
+          <th>Paid</th>
+          <th>Balance</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for inv in invoices %}
+          <tr>
+            <td><strong>{{ inv.enrollment.student.full_name }}</strong></td>
+            <td>{{ inv.title }}</td>
+            <td>{{ inv.due_date }}</td>
+            <td>${{ inv.amount }}</td>
+            <td>${{ inv.amount_paid }}</td>
+            <td class="fw-bold text-danger">${{ inv.balance }}</td>
+            <td><span class="badge bg-{% if inv.status == 'paid' %}success{% else %}warning{% endif %}">{{ inv.status }}</span></td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="7" class="text-center py-4 text-muted">No fee records found.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

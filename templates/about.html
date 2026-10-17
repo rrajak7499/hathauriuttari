@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block title %}About Us | Uchcha Madhyamic Vidyalaya Hathauri Uttari{% endblock %}
+
+{% block content %}
+
+<!-- Header Banner -->
+<section class="relative bg-slate-950 py-16 text-white text-center">
+  <div class="max-w-4xl mx-auto px-4 space-y-3">
+    <span class="inline-block bg-red-600/90 text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full">
+      BSEB Affiliated &bull; Govt of Bihar
+    </span>
+    <h1 class="text-3xl sm:text-5xl font-black uppercase tracking-tight">
+      About Our Institution
+    </h1>
+    <p class="text-xs sm:text-sm text-slate-300">
+      Uchcha Madhyamic Vidyalaya Hathauri Uttari, Kothra, Baheri, Darbhanga &bull; 847105
+    </p>
+  </div>
+</section>
+
+<!-- Overview Grid -->
+<section class="py-16 bg-white border-b border-slate-200">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+    
+    <div class="lg:col-span-7 space-y-5">
+      <span class="text-xs font-bold text-red-600 uppercase tracking-widest">Secondary &amp; Senior Secondary</span>
+      <h2 class="text-2xl sm:text-3xl font-black text-slate-900 leading-snug">
+        Quality Public Education for Class 9th through 12th
+      </h2>
+      <p class="text-slate-600 text-sm leading-relaxed text-justify">
+        Established under the Department of Education, Bihar, <strong>Uchcha Madhyamic Vidyalaya Hathauri Uttari</strong> serves the students of Baheri block. Our school does not run primary or middle grades; our physical infrastructure, laboratories, and specialized teachers are solely dedicated to secondary matriculation and intermediate senior secondary examinations.
+      </p>
+
+      <div class="grid grid-cols-2 gap-4 pt-2">
+        <div class="p-4 bg-stone-50 border border-stone-200 rounded-2xl">
+          <span class="text-lg font-black text-slate-900 block">Class 9 &amp; 10</span>
+          <span class="text-xs text-slate-500 font-medium">BSEB Matriculation Wing</span>
+        </div>
+        <div class="p-4 bg-stone-50 border border-stone-200 rounded-2xl">
+          <span class="text-lg font-black text-red-600 block">Class 11 &amp; 12</span>
+          <span class="text-xs text-slate-500 font-medium">120 Intermediate Seats</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="lg:col-span-5 rounded-3xl overflow-hidden shadow-xl border-4 border-white bg-slate-100">
+      <img src="https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=800&q=80" alt="School" class="w-full h-80 object-cover"/>
+    </div>
+
+  </div>
+</section>
+
+<!-- Senior Secondary Streams Section (PCM, PCB, Arts) -->
+<section id="streams" class="py-16 bg-stone-50">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+    <div class="text-center max-w-xl mx-auto">
+      <span class="text-xs font-bold text-red-600 uppercase tracking-widest">Intermediate (+2) Streams</span>
+      <h3 class="text-2xl font-black text-slate-900 uppercase mt-1">Science &amp; Arts Specializations</h3>
+      <p class="text-xs text-slate-500 mt-1">Authorized total capacity of 120 students via OFSS Bihar merit portal.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      
+      <!-- Science -->
+      <div class="bg-white rounded-3xl border border-slate-200 p-7 shadow-xs space-y-4">
+        <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+          <span class="text-xs font-bold uppercase text-blue-700 bg-blue-50 px-2.5 py-1 rounded-md">Faculty of Science (I.Sc)</span>
+          <span class="text-xs font-extrabold text-slate-900">60 Intake Seats</span>
+        </div>
+        <h4 class="text-lg font-black text-slate-900">Science Stream: PCM &amp; PCB Groups</h4>
+        <p class="text-xs text-slate-600 leading-relaxed">
+          Students can specialize in either Physics-Chemistry-Mathematics (PCM) for technical/engineering careers or Physics-Chemistry-Biology (PCB) for medical and biological fields.
+        </p>
+        <div class="grid grid-cols-2 gap-2 text-xs font-semibold">
+          <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+            <span class="block text-blue-600 font-bold uppercase text-[10px]">Group 1</span>
+            PCM (Mathematics)
+          </div>
+          <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+            <span class="block text-emerald-600 font-bold uppercase text-[10px]">Group 2</span>
+            PCB (Biology)
+          </div>
+        </div>
+      </div>
+
+      <!-- Arts -->
+      <div class="bg-white rounded-3xl border border-slate-200 p-7 shadow-xs space-y-4">
+        <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+          <span class="text-xs font-bold uppercase text-amber-700 bg-amber-50 px-2.5 py-1 rounded-md">Faculty of Arts (I.A)</span>
+          <span class="text-xs font-extrabold text-slate-900">60 Intake Seats</span>
+        </div>
+        <h4 class="text-lg font-black text-slate-900">Arts Stream: Humanities</h4>
+        <p class="text-xs text-slate-600 leading-relaxed">
+          Broad humanities program focused on History, Political Science, Geography, Economics, and State Languages preparing students for competitive examinations and degrees.
+        </p>
+        <div class="grid grid-cols-2 gap-2 text-xs font-semibold">
+          <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-100">History &amp; Pol Science</div>
+          <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-100">Geography &amp; Economics</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+{% endblock %}

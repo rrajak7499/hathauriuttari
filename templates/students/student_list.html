@@ -1,0 +1,570 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- CSRF Token for AJAX requests -->
+{% csrf_token %}
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
+
+  <!-- 1. Header Section -->
+  <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+    <div>
+      <div class="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 border border-indigo-100/80 px-3 py-1 rounded-full mb-1 shadow-xs">
+        <span class="w-1.5 h-1.5 rounded-full bg-indigo-600 animate-pulse"></span>
+        {{ selected_session.name }} Academic Session
+      </div>
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Student Directory</h1>
+      <p class="text-xs sm:text-sm text-slate-500 mt-0.5">Rosters, attendance markers, and contact records across all sessions.</p>
+    </div>
+
+    <!-- Global Actions: Exports & Management -->
+    <div class="flex items-center gap-2 flex-wrap">
+      <!-- Full Excel Export -->
+      <a href="{% url 'export_students_excel' %}?session={{ selected_session.id }}&grade={{ selected_grade }}&section={{ selected_section }}&status={{ selected_status }}&q={{ query }}" 
+         class="inline-flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-sm transition active:scale-95"
+         title="Export active filtered list to Excel">
+        <i class="bi bi-file-earmark-excel-fill"></i> Excel
+      </a>
+
+      <!-- Full PDF Export -->
+      <a href="{% url 'export_students_pdf' %}?session={{ selected_session.id }}&grade={{ selected_grade }}&section={{ selected_section }}&status={{ selected_status }}&q={{ query }}" 
+         class="inline-flex items-center gap-1.5 px-3 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-sm transition active:scale-95"
+         title="Export active filtered list to PDF">
+        <i class="bi bi-file-earmark-pdf-fill"></i> PDF
+      </a>
+
+      <!-- Visible ONLY when the selected session is the currently active/current session -->
+{% if selected_session.is_current and teacher_access %}
+  {% if selected_session.allow_modifications %}
+    <a href="{% url 'add_student' %}" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-sm transition active:scale-95">
+      <i class="bi bi-person-plus-fill"></i> Add Student
+    </a>
+ 
+  <a href="{% url 'promote_session' %}" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-sm transition active:scale-95">
+    <i class="bi bi-arrow-repeat"></i> Rollover
+  </a>
+   {% endif %}
+{% endif %}
+    </div>
+  </div>
+
+  <!-- 3. Advanced Filter Strip & Live Search -->
+  <div class="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-sm">
+    <form id="filterForm" method="get" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
+      
+      <!-- Session Filter -->
+      <div class="lg:col-span-3">
+        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Academic Session</label>
+        <select name="session" onchange="this.form.submit()" class="w-full text-xs font-medium bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+          {% for s in sessions %}
+            <option value="{{ s.id }}" {% if s.id|stringformat:"s" == selected_session.id|stringformat:"s" %}selected{% endif %}>
+              {{ s.name }} {% if s.is_current %}(Active){% endif %}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Class / Grade Filter -->
+      <div class="lg:col-span-2">
+        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Class / Grade</label>
+        <select name="grade" onchange="this.form.submit()" class="w-full text-xs font-medium bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+          <option value="">All Classes</option>
+          {% for g in grades %}
+            {% with g_val=g.numeric_level|default:g %}
+              <option value="{{ g_val }}" {% if selected_grade|stringformat:"s" == g_val|stringformat:"s" %}selected{% endif %}>
+                {{ g.name|default:g }}
+              </option>
+            {% endwith %}
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Section Filter (Populated for current session & class) -->
+      <div class="lg:col-span-2">
+        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Section</label>
+        <select name="section" onchange="this.form.submit()" class="w-full text-xs font-medium bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+          <option value="">All Sections</option>
+          {% for sec in available_sections %}
+            <option value="{{ sec.id }}" {% if selected_section|stringformat:"s" == sec.id|stringformat:"s" %}selected{% endif %}>
+              {{ sec.academic_class.name }} - Sec {{ sec.name }}{% if sec.stream %} ({{ sec.stream.code }}){% endif %}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Informed Status Filter -->
+      <div class="lg:col-span-2">
+        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Status</label>
+        <select name="status" onchange="this.form.submit()" class="w-full text-xs font-medium bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+          <option value="">All Students</option>
+          <option value="informed" {% if selected_status == 'informed' %}selected{% endif %}>Informed Only</option>
+          <option value="pending" {% if selected_status == 'pending' %}selected{% endif %}>Pending Only</option>
+        </select>
+      </div>
+
+      <!-- Live Client Search & Server Submit -->
+      <div class="lg:col-span-3">
+        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Search Roster</label>
+        <div class="relative flex gap-1.5">
+          <div class="relative flex-1">
+            <i class="bi bi-search absolute left-3 top-3 text-slate-400 text-xs"></i>
+            <input type="text" 
+                   id="quickSearchInput" 
+                   name="q" 
+                   value="{{ query }}" 
+                   placeholder="Type name, roll, adm #..." 
+                   class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-3 py-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+          </div>
+          <button type="submit" class="px-3.5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition shadow-xs" title="Search Database">
+            <i class="bi bi-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+
+    </form>
+
+    <!-- Active Filter Tags / Reset Button -->
+    {% if query or selected_grade or selected_section or selected_status %}
+      <div class="flex items-center gap-2 flex-wrap pt-3 mt-3 border-t border-slate-100 text-xs">
+        <span class="text-slate-400 text-[11px] font-bold uppercase tracking-wider">Filtered by:</span>
+        
+        {% if selected_grade %}
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 font-semibold border border-indigo-100">
+            Grade: {{ selected_grade }}
+            <a href="?session={{ selected_session.id }}{% if selected_section %}&section={{ selected_section }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if query %}&q={{ query }}{% endif %}" class="hover:text-indigo-900">&times;</a>
+          </span>
+        {% endif %}
+
+        {% if selected_section %}
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 font-semibold border border-blue-100">
+            Section Filtered
+            <a href="?session={{ selected_session.id }}{% if selected_grade %}&grade={{ selected_grade }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if query %}&q={{ query }}{% endif %}" class="hover:text-blue-900">&times;</a>
+          </span>
+        {% endif %}
+
+        {% if selected_status %}
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg {% if selected_status == 'informed' %}bg-emerald-50 text-emerald-700 border border-emerald-100{% else %}bg-amber-50 text-amber-700 border border-amber-100{% endif %} font-semibold">
+            Status: {{ selected_status|title }}
+            <a href="?session={{ selected_session.id }}{% if selected_grade %}&grade={{ selected_grade }}{% endif %}{% if selected_section %}&section={{ selected_section }}{% endif %}{% if query %}&q={{ query }}{% endif %}" class="hover:opacity-75">&times;</a>
+          </span>
+        {% endif %}
+
+        {% if query %}
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-semibold border border-slate-200">
+            Query: "{{ query }}"
+            <a href="?session={{ selected_session.id }}{% if selected_grade %}&grade={{ selected_grade }}{% endif %}{% if selected_section %}&section={{ selected_section }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}" class="hover:text-slate-900">&times;</a>
+          </span>
+        {% endif %}
+
+        <a href="?session={{ selected_session.id }}" class="text-rose-600 hover:text-rose-800 font-bold text-xs ml-auto hover:underline">
+          Clear All Filters
+        </a>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- 4. Counter Stats & Bulk Marker Strip -->
+  {% if records and teacher_access %}
+   <!-- Inside the Filters & Search Toolbar or Header in student_list.html -->
+<div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-slate-50 border border-slate-200/80 rounded-xl p-3 mb-4">
+  
+  <!-- Current Session State Indicators -->
+  <div class="flex items-center gap-2 flex-wrap text-xs">
+    <span class="font-bold text-slate-500 uppercase tracking-wider text-[11px]">Session Controls:</span>
+
+    <!-- Active Indicator -->
+    {% if selected_session.is_current %}
+      <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 shadow-2xs">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
+        Active Session
+      </span>
+    {% else %}
+      <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium bg-slate-200 text-slate-700">
+        Archived / Inactive
+      </span>
+    {% endif %}
+
+    <!-- Modification Lock Indicator -->
+    {% if selected_session.allow_modifications %}
+      <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+        <i class="bi bi-unlock-fill"></i> Modifications Allowed
+      </span>
+    {% else %}
+      <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
+        <i class="bi bi-lock-fill"></i> Modifications Locked
+      </span>
+    {% endif %}
+  </div>
+
+  <!-- Admin Controls: Make Active & Toggle Modifications -->
+  {% if teacher_access %}
+    <div class="flex items-center gap-2">
+      <!-- 1. Make Active Session Button (Only if not already current) -->
+      {% if not selected_session.is_current %}
+        <form method="post" action="{% url 'toggle_session_flags' %}" class="inline">
+          {% csrf_token %}
+          <input type="hidden" name="session_id" value="{{ selected_session.id }}">
+          <input type="hidden" name="action" value="set_active_session">
+          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+          <button type="submit" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition shadow-2xs active:scale-95 cursor-pointer">
+            <i class="bi bi-check2-circle"></i> Set Active
+          </button>
+        </form>
+      {% endif %}
+
+      <!-- 2. Enable/Disable Student Modifications Toggle -->
+      <form method="post" action="{% url 'toggle_session_flags' %}" class="inline">
+        {% csrf_token %}
+        <input type="hidden" name="session_id" value="{{ selected_session.id }}">
+        <input type="hidden" name="action" value="toggle_modification_lock">
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        
+        {% if selected_session.allow_modifications %}
+          <button type="submit" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition shadow-2xs active:scale-95 cursor-pointer" title="Lock student records to prevent changes">
+            <i class="bi bi-lock-fill"></i> Lock Editing
+          </button>
+        {% else %}
+          <button type="submit" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition shadow-2xs active:scale-95 cursor-pointer" title="Allow student changes">
+            <i class="bi bi-unlock-fill"></i> Unlock Editing
+          </button>
+        {% endif %}
+      </form>
+    </div>
+  {% endif %}
+
+</div>
+  {% endif %}
+
+  <!-- 5. Student Card Grid -->
+  <div id="studentCardsContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+    {% for item in records %}
+      <div id="student-card-{{ item.enrollment.id }}" 
+           class="student-card bg-white border {% if item.enrollment.is_informed %}border-emerald-400/80 ring-2 ring-emerald-100{% else %}border-slate-200/90{% endif %} rounded-2xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
+           data-searchable="{{ item.student.student_name|lower }} {{ item.student.admission_number|lower }} {{ item.enrollment.roll_number }} {{ item.student.father_name|default:''|lower }} {{ item.phone }}">
+        
+        <div>
+          <!-- Header: Avatar + Student ID -->
+          <div class="flex items-start gap-3.5 mb-3.5">
+            {% if item.student.profile_picture %}
+              <img src="{{ item.student.profile_picture.url }}" alt="{{ item.student.student_name }}" class="w-12 h-12 rounded-full object-cover border border-slate-200 shadow-sm shrink-0">
+            {% else %}
+              <div class="w-12 h-12 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 font-extrabold text-xs flex items-center justify-center uppercase tracking-wider shrink-0">
+                {{ item.student.student_name|slice:":2" }}
+              </div>
+            {% endif %}
+            
+            <div class="overflow-hidden flex-1 min-w-0">
+              <h3 class="font-bold text-slate-900 text-sm leading-snug truncate" title="{{ item.student.student_name }}">
+                {{ item.student.student_name }}
+              </h3>
+              <p class="text-[11px] text-slate-500 font-medium mt-0.5">
+                Adm #: <span class="font-semibold text-slate-700">{{ item.student.admission_number }}</span> &bull; Roll: <span class="font-semibold text-slate-700">{{ item.enrollment.roll_number }}</span>
+              </p>
+            </div>
+            
+            <!-- Informed Status Badge -->
+            <div id="status-badge-{{ item.enrollment.id }}" class="shrink-0">
+              {% if item.enrollment.is_informed %}
+                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                  <i class="bi bi-check-circle-fill text-[11px]"></i> Informed
+                </span>
+              {% else %}
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                  Pending
+                </span>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Academic Placement Badges -->
+          <div class="flex flex-wrap gap-1.5 mb-3">
+            <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100">
+              {{ item.enrollment.section.academic_class.name }} &middot; Sec {{ item.enrollment.section.name }}
+              {% if item.enrollment.section.stream %}
+                ({{ item.enrollment.section.stream.code }})
+              {% endif %}
+            </span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 text-slate-600">
+              {{ item.enrollment.session.name }}
+            </span>
+          </div>
+
+          <!-- Family & Contact Details -->
+          <div class="bg-slate-50 border border-slate-100 rounded-xl p-3 text-xs mb-3 space-y-1">
+            <div class="text-slate-500 truncate">
+              Father: <span class="font-semibold text-slate-700">{{ item.student.father_name|default:"Not Provided" }}</span>
+            </div>
+            <div class="text-slate-500">
+              Contact: 
+              {% if item.can_access %}
+                <span class="font-bold text-slate-800 tracking-wide">{{ item.phone }}</span>
+              {% else %}
+                <span class="font-medium text-slate-400 inline-flex items-center gap-1">
+                  <i class="bi bi-shield-lock-fill text-rose-500"></i> {{ item.phone }}
+                </span>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Informed Marker Controls -->
+          {% if teacher_access %}
+            <div class="flex items-center gap-1.5 mb-3.5">
+              <button type="button"
+                      data-id="{{ item.enrollment.id }}"
+                      class="mark-informed-btn flex-1 py-1.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer {% if item.enrollment.is_informed %}bg-emerald-50 border-emerald-300 text-emerald-800 opacity-60 cursor-not-allowed{% else %}bg-emerald-600 hover:bg-emerald-700 text-white border-transparent active:scale-95{% endif %}"
+                      {% if item.enrollment.is_informed %}disabled{% endif %}>
+                <i class="bi bi-check2"></i> Mark Informed
+              </button>
+
+              <button type="button"
+                      data-id="{{ item.enrollment.id }}"
+                      title="Clear Informed Mark"
+                      class="clear-informed-btn px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center justify-center transition cursor-pointer {% if not item.enrollment.is_informed %}opacity-30 cursor-not-allowed bg-slate-50 border-slate-200 text-slate-400{% else %}border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-600 active:scale-95{% endif %}"
+                      {% if not item.enrollment.is_informed %}disabled{% endif %}>
+                <i class="bi bi-x-lg"></i>
+              </button>
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Action Footer -->
+        <div class="pt-3 border-t border-slate-100 flex items-center gap-1.5">
+          {% if item.can_access %}
+            <a href="tel:{{ item.raw_phone }}" class="flex-1 py-1.5 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-semibold flex items-center justify-center gap-1 transition active:scale-95" title="Call Guardian">
+              <i class="bi bi-telephone-fill"></i> Call
+            </a>
+            
+            <a href="https://wa.me/{{ item.raw_phone|cut:' '|cut:'-'|cut:'+'|cut:'('|cut:')'|cut:'.' }}" target="_blank" class="flex-1 py-1.5 rounded-xl border border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100 text-xs font-semibold flex items-center justify-center gap-1 transition active:scale-95" title="WhatsApp Chat">
+              <i class="bi bi-whatsapp"></i> Chat
+            </a>
+
+            <a href="{% url 'student_detail' item.student.pk %}" class="px-2.5 py-1.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 transition" title="View Full Dossier">
+              <i class="bi bi-eye"></i>
+            </a>
+
+            <a href="{% url 'student_update' item.student.pk %}" class="px-2.5 py-1.5 rounded-xl border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 transition" title="Edit Student">
+              <i class="bi bi-pencil-square"></i>
+            </a>
+
+            <form method="post" action="{% url 'student_delete' item.student.pk %}" onsubmit="return confirm('Are you sure you want to permanently delete {{ item.student.student_name }}?');" class="inline">
+              {% csrf_token %}
+              <button type="submit" class="px-2.5 py-1.5 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-600 transition cursor-pointer" title="Delete Student">
+                <i class="bi bi-trash-fill"></i>
+              </button>
+            </form>
+          {% else %}
+            <div class="w-full py-1 text-center">
+              <span class="text-[11px] text-slate-400 font-medium inline-flex items-center gap-1 justify-center">
+                <i class="bi bi-lock-fill"></i> Staff credentials required for actions
+              </span>
+            </div>
+          {% endif %}
+        </div>
+
+      </div>
+    {% empty %}
+      <div class="col-span-full py-16 text-center text-slate-400 bg-white border border-slate-100 rounded-2xl shadow-sm">
+        <i class="bi bi-person-x text-4xl mb-2 block text-slate-300"></i>
+        <p class="text-sm font-semibold text-slate-600">No student profiles found.</p>
+        <p class="text-xs text-slate-400 mt-1">Try refining your filter criteria or selecting another academic session.</p>
+        <a href="?session={{ selected_session.id }}" class="mt-3 inline-block text-xs font-semibold text-indigo-600 hover:underline">
+          Reset all filters
+        </a>
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- Client-side No Match Fallback -->
+  <div id="noMatchMessage" class="hidden py-16 text-center text-slate-400 bg-white border border-slate-100 rounded-2xl shadow-sm">
+    <i class="bi bi-search text-3xl mb-2 block text-slate-300"></i>
+    <p class="text-sm font-semibold text-slate-600">No matching students found on this page.</p>
+    <p class="text-xs text-slate-400 mt-1">Check spelling or clear your quick search term.</p>
+  </div>
+
+</div>
+
+<!-- JavaScript for Live Filters & Dynamic DOM Updates -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+
+  // 1. Instant Client-Side Roster Search (Zero Page Reloads)
+  const quickSearchInput = document.getElementById('quickSearchInput');
+  const studentCards = document.querySelectorAll('.student-card');
+  const noMatchMsg = document.getElementById('noMatchMessage');
+  const showingCounter = document.getElementById('stat-showing');
+
+  if (quickSearchInput) {
+    quickSearchInput.addEventListener('input', function () {
+      const q = this.value.trim().toLowerCase();
+      let visibleCount = 0;
+
+      studentCards.forEach(card => {
+        const text = card.dataset.searchable || '';
+        if (!q || text.includes(q)) {
+          card.classList.remove('hidden');
+          visibleCount++;
+        } else {
+          card.classList.add('hidden');
+        }
+      });
+
+      if (showingCounter) showingCounter.textContent = visibleCount;
+      if (noMatchMsg) noMatchMsg.classList.toggle('hidden', visibleCount > 0 || studentCards.length === 0);
+    });
+  }
+
+  // 2. Mark / Unmark Live Counter Updates
+  function updateCounters(delta) {
+    const markedEl = document.getElementById('stat-marked');
+    const remainingEl = document.getElementById('stat-remaining');
+    if (!markedEl || !remainingEl) return;
+
+    let marked = parseInt(markedEl.textContent, 10) + delta;
+    let remaining = parseInt(remainingEl.textContent, 10) - delta;
+
+    markedEl.textContent = Math.max(0, marked);
+    remainingEl.textContent = Math.max(0, remaining);
+  }
+
+  function resetCountersToZero() {
+    const totalEl = document.getElementById('stat-total');
+    const markedEl = document.getElementById('stat-marked');
+    const remainingEl = document.getElementById('stat-remaining');
+    if (!markedEl || !remainingEl || !totalEl) return;
+
+    markedEl.textContent = '0';
+    remainingEl.textContent = totalEl.textContent;
+  }
+
+  function updateCardUI(enrollmentId, isInformed) {
+    const card = document.getElementById(`student-card-${enrollmentId}`);
+    const badgeContainer = document.getElementById(`status-badge-${enrollmentId}`);
+    if (!card) return;
+
+    const markBtn = card.querySelector('.mark-informed-btn');
+    const clearBtn = card.querySelector('.clear-informed-btn');
+
+    if (isInformed) {
+      card.classList.remove('border-slate-200/90');
+      card.classList.add('border-emerald-400/80', 'ring-2', 'ring-emerald-100');
+
+      if (badgeContainer) {
+        badgeContainer.innerHTML = `
+          <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+            <i class="bi bi-check-circle-fill text-[11px]"></i> Informed
+          </span>`;
+      }
+
+      if (markBtn) {
+        markBtn.disabled = true;
+        markBtn.className = 'mark-informed-btn flex-1 py-1.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition bg-emerald-50 border-emerald-300 text-emerald-800 opacity-60 cursor-not-allowed';
+      }
+
+      if (clearBtn) {
+        clearBtn.disabled = false;
+        clearBtn.className = 'clear-informed-btn px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center justify-center transition border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-600 active:scale-95 cursor-pointer';
+      }
+    } else {
+      card.classList.remove('border-emerald-400/80', 'ring-2', 'ring-emerald-100');
+      card.classList.add('border-slate-200/90');
+
+      if (badgeContainer) {
+        badgeContainer.innerHTML = `
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
+            Pending
+          </span>`;
+      }
+
+      if (markBtn) {
+        markBtn.disabled = false;
+        markBtn.className = 'mark-informed-btn flex-1 py-1.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition bg-emerald-600 hover:bg-emerald-700 text-white border-transparent active:scale-95 cursor-pointer';
+      }
+
+      if (clearBtn) {
+        clearBtn.disabled = true;
+        clearBtn.className = 'clear-informed-btn px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center justify-center transition opacity-30 cursor-not-allowed bg-slate-50 border-slate-200 text-slate-400';
+      }
+    }
+  }
+
+  // Handle Mark Single Student
+  document.querySelectorAll('.mark-informed-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+      const enrollmentId = this.dataset.id;
+      fetch(`/students/enrollment/${enrollmentId}/toggle-informed/`, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': csrfToken,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({ action: 'mark' })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'success') {
+          updateCardUI(enrollmentId, true);
+          updateCounters(+1);
+        }
+      })
+      .catch(err => console.error('Error marking student:', err));
+    });
+  });
+
+  // Handle Clear Single Student Mark
+  document.querySelectorAll('.clear-informed-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+      const enrollmentId = this.dataset.id;
+      fetch(`/students/enrollment/${enrollmentId}/toggle-informed/`, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': csrfToken,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({ action: 'clear' })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'success') {
+          updateCardUI(enrollmentId, false);
+          updateCounters(-1);
+        }
+      })
+      .catch(err => console.error('Error clearing mark:', err));
+    });
+  });
+
+  // Handle Clear All Marked for Section
+  const clearAllBtn = document.getElementById('clearAllSectionBtn');
+  if (clearAllBtn) {
+    clearAllBtn.addEventListener('click', function () {
+      if (!confirm('Are you sure you want to clear the "informed" mark for all students in this section?')) {
+        return;
+      }
+      const sectionId = this.dataset.sectionId;
+      const sessionId = this.dataset.sessionId;
+
+      fetch(`/students/section/${sectionId}/clear-informed/`, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': csrfToken,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({ session_id: sessionId })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'success') {
+          document.querySelectorAll('[id^="student-card-"]').forEach(card => {
+            const enrollmentId = card.id.replace('student-card-', '');
+            updateCardUI(enrollmentId, false);
+          });
+          resetCountersToZero();
+        }
+      })
+      .catch(err => console.error('Error clearing section:', err));
+    });
+  }
+});
+</script>
+{% endblock %}

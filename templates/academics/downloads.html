@@ -1,0 +1,239 @@
+{% extends 'base.html' %}
+
+{% block title %}Forms & Downloads | U.M.V. Hathauri Uttari{% endblock %}
+
+{% block content %}
+
+<!-- Header Banner -->
+<section class="bg-slate-950 py-12 text-white border-b border-slate-800">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div>
+        <span class="text-xs font-bold uppercase tracking-wider text-emerald-400 bg-white/10 px-3 py-1 rounded-full">
+          Official Documents &bull; Resources
+        </span>
+        <h1 class="text-2xl sm:text-3xl font-black uppercase tracking-tight mt-2">
+          Forms &amp; Academic Downloads
+        </h1>
+        <p class="text-xs text-slate-400 mt-1">Uchcha Madhyamic Vidyalaya Hathauri Uttari, Baheri, Darbhanga</p>
+      </div>
+      <nav class="text-xs text-slate-400 font-semibold">
+        <a href="{% url 'home' %}" class="hover:text-emerald-400 transition-colors">Home</a> / <span class="text-white">Downloads</span>
+      </nav>
+    </div>
+  </div>
+</section>
+
+<!-- Main Downloads Section -->
+<section class="py-10 bg-slate-100 min-h-[70vh]">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+
+    <!-- Flash Messages -->
+    {% if messages %}
+      <div class="space-y-2">
+        {% for msg in messages %}
+          <div class="p-3.5 rounded-2xl text-xs font-bold {% if msg.tags == 'success' %}bg-emerald-50 text-emerald-800 border border-emerald-200{% else %}bg-rose-50 text-rose-800 border border-rose-200{% endif %}">
+            {{ msg }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <!-- Top Action & Search Toolbar -->
+    <div class="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 shadow-2xs space-y-4">
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        
+        <!-- Category Pills -->
+        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0 text-xs font-bold scrollbar-none">
+          <a href="?{% if search_query %}q={{ search_query }}{% endif %}" 
+             class="px-3.5 py-1.5 rounded-xl border transition {% if not selected_category %}bg-slate-900 text-white border-slate-900 shadow-2xs{% else %}bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100{% endif %} shrink-0">
+            All
+          </a>
+          {% for cat_val, cat_label in categories %}
+            <a href="?category={{ cat_val }}{% if search_query %}&q={{ search_query }}{% endif %}" 
+               class="px-3.5 py-1.5 rounded-xl border transition {% if selected_category == cat_val %}bg-emerald-600 text-white border-emerald-600 shadow-2xs{% else %}bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100{% endif %} shrink-0">
+              {{ cat_label }}
+            </a>
+          {% endfor %}
+        </div>
+
+        <div class="flex items-center gap-3 w-full lg:w-auto justify-end">
+          <!-- Search Input -->
+          <div class="relative w-full sm:w-64">
+            <i class="bi bi-search absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+            <input type="text" 
+                   id="download-search" 
+                   value="{{ search_query|default:'' }}" 
+                   placeholder="Search documents..." 
+                   class="w-full border border-slate-200 rounded-xl pl-8 pr-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50 transition" />
+          </div>
+
+          <!-- Admin Add Button -->
+          {% if is_admin %}
+            <a href="{% url 'download_create' %}" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition shadow-sm active:scale-95 whitespace-nowrap shrink-0">
+              <i class="bi bi-plus-lg"></i> Add File
+            </a>
+          {% endif %}
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Downloads Table -->
+    <div class="overflow-x-auto rounded-2xl border border-slate-200/90 bg-white shadow-2xs">
+      <table class="w-full text-left text-sm text-slate-700" id="downloads-table">
+        <thead class="border-b border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+          <tr>
+            <th class="w-16 py-3.5 px-4 text-center">#</th>
+            <th class="py-3.5 px-5">Document Title &amp; Category</th>
+            <th class="w-28 py-3.5 px-4 text-center">Downloads</th>
+            <th class="w-32 py-3.5 px-4 text-center">Access</th>
+            {% if is_admin %}
+              <th class="w-28 py-3.5 px-4 text-center">Manage</th>
+            {% endif %}
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100" id="downloads-body">
+          {% for item in downloads %}
+            <tr class="download-row hover:bg-slate-50/70 transition-colors">
+              <!-- Counter -->
+              <td class="py-4 px-4 text-center font-mono text-xs text-slate-400">
+                {{ forloop.counter }}
+              </td>
+
+              <!-- Document Details -->
+              <td class="py-4 px-5">
+                <div class="space-y-1">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <!-- Title with Drive Tracker Link -->
+                    <a href="{% url 'track_download_file' item.pk %}" 
+                       target="_blank" 
+                       rel="noopener noreferrer" 
+                       class="text-base font-semibold text-slate-900 hover:text-emerald-700 transition-colors">
+                      {{ item.title|capfirst }}
+                    </a>
+
+                    <!-- Category Badge -->
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200">
+                      {{ item.get_category_display }}
+                    </span>
+
+                    {% if is_admin and not item.is_active %}
+                      <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                        Hidden
+                      </span>
+                    {% endif %}
+                  </div>
+
+                  {% if item.description %}
+                    <p class="text-xs text-slate-500 max-w-2xl line-clamp-1 leading-relaxed">
+                      {{ item.description|capfirst }}
+                    </p>
+                  {% endif %}
+                </div>
+              </td>
+
+              <!-- Counter -->
+              <td class="py-4 px-4 text-center text-xs font-semibold text-slate-400 whitespace-nowrap">
+                <span class="inline-flex items-center gap-1">
+                  <i class="bi bi-cloud-arrow-down text-slate-400"></i> {{ item.download_count }}
+                </span>
+              </td>
+
+              <!-- Google Drive Download / Preview Buttons -->
+              <td class="py-4 px-4 text-center whitespace-nowrap">
+                <div class="inline-flex items-center justify-center gap-2">
+                  <!-- Drive View Link -->
+                  <a href="{{ item.drive_link }}" 
+                     target="_blank" 
+                     rel="noopener noreferrer" 
+                     class="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition" 
+                     title="Preview in Google Drive">
+                    <i class="bi bi-box-arrow-up-right text-xs"></i>
+                  </a>
+
+                  <!-- Tracked Direct Download Link -->
+                  <a href="{% url 'track_download_file' item.pk %}" 
+                     target="_blank" 
+                     rel="noopener noreferrer" 
+                     class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold transition shadow-2xs active:scale-95" 
+                     title="Download Document">
+                    <i class="bi bi-file-earmark-pdf-fill"></i> PDF
+                  </a>
+                </div>
+              </td>
+
+              <!-- Admin Action Controls -->
+              {% if is_admin %}
+                <td class="py-4 px-4 text-center whitespace-nowrap">
+                  <div class="inline-flex items-center gap-1.5">
+                    <!-- Edit -->
+                    <a href="{% url 'download_update' item.pk %}" 
+                       class="p-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-emerald-50 text-slate-600 hover:text-emerald-700 transition shadow-2xs" 
+                       title="Edit Document">
+                      <i class="bi bi-pencil-square text-xs"></i>
+                    </a>
+
+                    <!-- Delete -->
+                    <form method="post" action="{% url 'download_delete' item.pk %}" onsubmit="return confirm('Permanently delete {{ item.title }}?');" class="inline">
+                      {% csrf_token %}
+                      <button type="submit" 
+                              class="p-1.5 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-600 transition shadow-2xs cursor-pointer" 
+                              title="Delete Document">
+                        <i class="bi bi-trash-fill text-xs"></i>
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              {% endif %}
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="{% if is_admin %}5{% else %}4{% endif %}" class="py-12 text-center text-xs text-slate-400">
+                <i class="bi bi-folder-x text-3xl mb-1.5 block text-slate-300"></i>
+                No documents found.
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Live Summary Bar -->
+    <div class="flex items-center justify-between text-xs text-slate-500 pt-1">
+      <span id="download-summary">Showing {{ downloads|length }} available document(s)</span>
+    </div>
+
+  </div>
+</section>
+
+<!-- Filter Search Script with Dynamic Counter -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const searchInput = document.getElementById('download-search');
+  const rows = Array.from(document.querySelectorAll('.download-row'));
+  const summaryEl = document.getElementById('download-summary');
+  const totalCount = rows.length;
+
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      const term = e.target.value.toLowerCase().trim();
+      let matchCount = 0;
+
+      rows.forEach(r => {
+        const matches = r.textContent.toLowerCase().includes(term);
+        r.style.display = matches ? '' : 'none';
+        if (matches) matchCount++;
+      });
+
+      if (summaryEl) {
+        summaryEl.textContent = term.length > 0 
+          ? `Showing ${matchCount} of ${totalCount} document(s)` 
+          : `Showing ${totalCount} available document(s)`;
+      }
+    });
+  }
+});
+</script>
+
+{% endblock %}

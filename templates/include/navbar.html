@@ -1,0 +1,263 @@
+<header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-xs">
+  <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-20">
+      
+      <!-- Left Area on Mobile: Hamburger Button + School Branding -->
+      <div class="flex items-center gap-3">
+        <!-- Mobile Drawer Open Button (Leftmost on mobile) -->
+        <button id="mobile-toggle-btn" type="button" class="xl:hidden p-2 -ml-2 text-slate-700 hover:text-red-600 hover:bg-slate-100 rounded-lg transition focus:outline-none">
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+
+        <!-- School Branding / Logo -->
+        <a href="/" class="flex items-center gap-3 group shrink-0">
+          <div class="w-10 h-10 sm:w-11 sm:h-11 bg-gradient-to-br from-red-600 to-rose-700 text-white rounded-xl flex items-center justify-center shadow-md shadow-red-500/20 group-hover:scale-105 transition-transform duration-200 shrink-0">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6 fill-current" viewBox="0 0 24 24">
+              <path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z"/>
+            </svg>
+          </div>
+          <div class="flex flex-col">
+            <span class="text-xs sm:text-[15px] font-black text-slate-900 tracking-tight leading-tight uppercase group-hover:text-red-600 transition-colors">
+              {{ school_cfg.short_name|default:school_cfg.school_name }}
+            </span>
+            <span class="text-[9px] sm:text-[10px] font-semibold tracking-widest text-slate-400 uppercase mt-0.5">
+              Affiliated to {{ school_cfg.board_affiliation }}
+            </span>
+          </div>
+        </a>
+      </div>
+
+      <!-- Desktop Navigation Menus (Grouped & Dropdowns) -->
+      <nav class="hidden xl:flex items-center space-x-1.5 text-[12px] font-bold uppercase tracking-wider text-slate-700 whitespace-nowrap">
+        <a href="/" class="px-3.5 py-2 text-red-600 bg-red-50/80 rounded-lg transition font-extrabold">Home</a>
+
+        <!-- About Us Dropdown -->
+        <div class="relative group">
+          <button type="button" class="flex items-center gap-1.5 px-3.5 py-2 hover:text-red-600 hover:bg-slate-50 rounded-lg transition cursor-pointer font-bold focus:outline-none">
+            About Us
+            <svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-red-600 group-hover:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          <div class="absolute left-0 top-full pt-1.5 hidden group-hover:block w-52 z-50">
+            <div class="bg-white rounded-xl shadow-xl border border-slate-100 py-2 normal-case font-medium text-xs text-slate-700">
+              <a href="{% url 'about' %}" class="block px-4 py-2 hover:bg-red-50 hover:text-red-600 transition">Overview &amp; Profile</a>
+              <a href="{% url 'faculty' %}" class="block px-4 py-2 hover:bg-red-50 hover:text-red-600 transition">Teachers &amp; Faculty</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Academics Dropdown (Staff & Admin Only) -->
+        {% if user.is_authenticated and user.is_staff or user.is_superuser %}
+<div class="relative group">
+  <button type="button" class="flex items-center gap-1.5 px-3.5 py-2 hover:text-red-600 hover:bg-slate-50 rounded-lg transition font-bold">
+    Academics
+    <svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+    </svg>
+  </button>
+  <div class="absolute left-0 top-full pt-1.5 hidden group-hover:block w-56 z-50">
+    <div class="bg-white rounded-xl shadow-xl border border-slate-100 py-2 normal-case font-medium text-xs text-slate-700">
+      <a href="{% url 'manage_academic_structure' %}" class="block px-4 py-2 hover:bg-red-50 hover:text-red-600 transition">Classes, Sections &amp; Streams</a>
+      
+      <!-- Superuser permission control button -->
+      {% if user.is_superuser %}
+        <a href="{% url 'manage_staff_permissions' %}" class="block px-4 py-2 font-bold text-amber-700 bg-amber-50/60 hover:bg-amber-100 transition">
+          <i class="bi bi-shield-lock-fill mr-1"></i> Staff Permissions
+        </a>
+      {% endif %}
+
+      <a href="{% url 'student_list' %}" class="block px-4 py-2 hover:bg-red-50 hover:text-red-600 transition">Student Directory</a>
+      <a href="{% url 'student_create' %}" class="block px-4 py-2 hover:bg-red-50 hover:text-red-600 transition">New Admission</a>
+      <a href="{% url 'promote_session' %}" class="block px-4 py-2 hover:bg-red-50 hover:text-red-600 transition">Session Promotion</a>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+        <!-- Student Corner Dropdown -->
+        <div class="relative group">
+          <button type="button" class="flex items-center gap-1.5 px-3.5 py-2 hover:text-red-600 hover:bg-slate-50 rounded-lg transition cursor-pointer font-bold focus:outline-none">
+            Student Corner
+            <svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-red-600 group-hover:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          <div class="absolute left-0 top-full pt-1.5 hidden group-hover:block w-52 z-50">
+            <div class="bg-white rounded-xl shadow-xl border border-slate-100 py-2 normal-case font-medium text-xs text-slate-700">
+              <a href="{% url 'notices' %}" class="block px-4 py-2 hover:bg-red-50 hover:text-red-600 transition">Notice Board</a>
+              <a href="{% url 'downloads' %}" class="block px-4 py-2 hover:bg-red-50 hover:text-red-600 transition">Forms &amp; Downloads</a>
+              <a href="{% url 'gallery' %}" class="block px-4 py-2 hover:bg-red-50 hover:text-red-600 transition">Campus Gallery</a>
+            </div>
+          </div>
+        </div>
+
+        <a href="{% url 'contact' %}" class="px-3.5 py-2 hover:text-red-600 hover:bg-slate-50 rounded-lg transition">Contact Us</a>
+      </nav>
+
+      <!-- User Authentication Controls (Desktop) -->
+      <div class="hidden xl:flex items-center gap-3 shrink-0">
+        {% if user.is_authenticated %}
+          <div class="flex items-center gap-2 bg-slate-100 border border-slate-200/90 pl-2.5 pr-3.5 py-1.5 rounded-full text-xs font-semibold text-slate-700">
+            <div class="w-5 h-5 bg-slate-300 text-slate-700 rounded-full flex items-center justify-center">
+              <svg class="w-3 h-3 fill-current" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <span>{{ user.username|default:"admin" }}</span>
+          </div>
+
+          <form method="POST" action="{% url 'logout' %}" class="inline m-0">
+            {% csrf_token %}
+            <button type="submit" class="border border-slate-200 hover:border-red-600 hover:bg-red-50 hover:text-red-600 text-slate-700 text-xs font-bold uppercase tracking-wider px-4 py-1.5 rounded-full transition cursor-pointer">
+              Logout
+            </button>
+          </form>
+        {% else %}
+          <a href="{% url 'login' %}" class="bg-red-600 hover:bg-red-700 text-white text-xs font-bold uppercase tracking-wider px-5 py-2 rounded-full shadow-sm transition">
+            Login
+          </a>
+        {% endif %}
+      </div>
+
+    </div>
+  </div>
+</header>
+
+<!-- ============================================================
+     MOBILE LEFT SLIDE-OVER DRAWER & BACKDROP
+============================================================ -->
+<div id="mobile-drawer-container" class="fixed inset-0 z-50 pointer-events-none transition-opacity duration-300 opacity-0">
+  
+  <!-- Dark Backdrop Overlay -->
+  <div id="mobile-backdrop" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-300"></div>
+
+  <!-- Left Drawer Panel -->
+  <div id="mobile-drawer-panel" class="fixed inset-y-0 left-0 w-[82%] max-w-xs bg-white shadow-2xl flex flex-col pointer-events-auto transform -translate-x-full transition-transform duration-300 ease-in-out">
+    
+    <!-- Drawer Top Header -->
+    <div class="flex items-center justify-between p-4 border-b border-slate-100 bg-stone-50">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 bg-red-600 text-white rounded-lg flex items-center justify-center shadow-xs">
+          <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
+            <path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3z"/>
+          </svg>
+        </div>
+        <div>
+          <h4 class="text-xs font-black text-slate-900 uppercase leading-none">{{school_cfg.school_name_part_1}}</h4>
+          <span class="text-[10px] text-slate-500 font-semibold">{{school_cfg.school_name_part_2}}</span>
+        </div>
+      </div>
+
+      <!-- Close Button -->
+      <button id="mobile-drawer-close" type="button" class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded-lg transition focus:outline-none">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Drawer Navigation Links (Scrollable) -->
+    <div class="flex-1 overflow-y-auto px-4 py-4 space-y-4 text-xs font-semibold">
+      
+      <!-- Home -->
+      <a href="{% url 'home' %}" class="flex items-center gap-2.5 px-3 py-2 text-red-600 bg-red-50 rounded-lg font-bold">
+        <span>Home</span>
+      </a>
+
+      <!-- About Group -->
+      <div class="space-y-1">
+        <span class="text-[10px] uppercase tracking-wider text-slate-400 font-bold px-3 block">About School</span>
+        <a href="{% url 'about' %}" class="block px-3 py-1.5 text-slate-700 hover:text-red-600 hover:bg-slate-50 rounded-lg">Overview &amp; Profile</a>
+        <a href="{% url 'faculty' %}" class="block px-3 py-1.5 text-slate-700 hover:text-red-600 hover:bg-slate-50 rounded-lg">Teachers &amp; Faculty</a>
+      </div>
+
+      <!-- Academics Group (Staff & Admin Only) -->
+      {% if user.is_authenticated and user.is_staff or user.is_superuser %}
+      <div class="space-y-1">
+        <span class="text-[10px] uppercase tracking-wider text-slate-400 font-bold px-3 block">Academics</span>
+        <a href="{% url 'manage_academic_structure' %}" class="block px-3 py-1.5 text-slate-700 hover:text-red-600 hover:bg-slate-50 rounded-lg">Classes, Sections &amp; Streams</a>
+        <a href="{% url 'student_list' %}" class="block px-3 py-1.5 text-slate-700 hover:text-red-600 hover:bg-slate-50 rounded-lg">Student Directory</a>
+        <a href="{% url 'student_create' %}" class="block px-3 py-1.5 text-slate-700 hover:text-red-600 hover:bg-slate-50 rounded-lg">New Admission</a>
+        <a href="{% url 'promote_session' %}" class="block px-3 py-1.5 text-slate-700 hover:text-red-600 hover:bg-slate-50 rounded-lg">Session Promotion</a>
+        <a href="{% url 'downloads' %}" class="block px-3 py-1.5 text-slate-700 hover:text-red-600 hover:bg-slate-50 rounded-lg">Curriculum &amp; Syllabus</a>
+      </div>
+      {% endif %}
+
+      <!-- Student Corner Group -->
+      <div class="space-y-1">
+        <span class="text-[10px] uppercase tracking-wider text-slate-400 font-bold px-3 block">Student Corner</span>
+        <a href="{% url 'notices' %}" class="block px-3 py-1.5 text-slate-700 hover:text-red-600 hover:bg-slate-50 rounded-lg">Notice Board</a>
+        <a href="{% url 'downloads' %}" class="block px-3 py-1.5 text-slate-700 hover:text-red-600 hover:bg-slate-50 rounded-lg">Forms &amp; Downloads</a>
+        <a href="{% url 'gallery' %}" class="block px-3 py-1.5 text-slate-700 hover:text-red-600 hover:bg-slate-50 rounded-lg">Campus Gallery</a>
+      </div>
+
+      <!-- Contact -->
+      <a href="{% url 'contact' %}" class="block px-3 py-2 text-slate-700 hover:text-red-600 hover:bg-slate-50 rounded-lg font-bold">
+        Contact Us
+      </a>
+
+    </div>
+
+    <!-- Drawer Footer (Auth & User Status) -->
+    <div class="p-4 border-t border-slate-100 bg-stone-50/70">
+      {% if user.is_authenticated %}
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-[11px]">
+              {{ user.username|slice:":1"|upper }}
+            </div>
+            <span class="text-xs text-slate-700 font-semibold">{{ user.username }}</span>
+          </div>
+          <form method="POST" action="{% url 'logout' %}" class="m-0">
+            {% csrf_token %}
+            <button type="submit" class="text-xs font-bold text-red-600 hover:underline uppercase cursor-pointer">Logout</button>
+          </form>
+        </div>
+      {% else %}
+        <a href="{% url 'login' %}" class="block w-full py-2.5 text-center bg-red-600 hover:bg-red-700 text-white font-bold text-xs uppercase tracking-wider rounded-lg shadow-sm transition">
+          Login
+        </a>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+
+<!-- ============================================================
+     DRAWER SLIDE LOGIC
+============================================================ -->
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const toggleBtn = document.getElementById('mobile-toggle-btn');
+    const closeBtn = document.getElementById('mobile-drawer-close');
+    const backdrop = document.getElementById('mobile-backdrop');
+    const container = document.getElementById('mobile-drawer-container');
+    const panel = document.getElementById('mobile-drawer-panel');
+
+    function openDrawer() {
+      container.classList.remove('pointer-events-none');
+      container.classList.add('pointer-events-auto', 'opacity-100');
+      container.classList.remove('opacity-0');
+      panel.classList.remove('-translate-x-full');
+      panel.classList.add('translate-x-0');
+      document.body.classList.add('overflow-hidden');
+    }
+
+    function closeDrawer() {
+      panel.classList.remove('translate-x-0');
+      panel.classList.add('-translate-x-full');
+      container.classList.remove('opacity-100');
+      container.classList.add('opacity-0');
+      container.classList.add('pointer-events-none');
+      container.classList.remove('pointer-events-auto');
+      document.body.classList.remove('overflow-hidden');
+    }
+
+    if (toggleBtn) toggleBtn.addEventListener('click', openDrawer);
+    if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
+    if (backdrop) backdrop.addEventListener('click', closeDrawer);
+  });
+</script>

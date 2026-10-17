@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="min-h-[calc(100vh-16rem)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-md w-full space-y-6">
+
+    <!-- Card Container -->
+    <div class="bg-white border-2 border-slate-200/90 rounded-2xl p-8 shadow-sm">
+      
+      <!-- Header -->
+      <div class="text-center mb-8">
+        <div class="w-14 h-14 bg-red-600 text-white rounded-2xl flex items-center justify-center text-2xl mx-auto shadow-md shadow-red-600/20 mb-3">
+          <i class="bi bi-shield-lock-fill"></i>
+        </div>
+        <h2 class="text-2xl font-black text-slate-900 tracking-tight">Staff & Faculty Portal</h2>
+        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-1">
+          Restricted Access &bull; Classes 9 to 12
+        </p>
+      </div>
+
+      <!-- Error Alerts -->
+      {% if form.errors %}
+        <div class="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 text-xs font-bold flex items-start gap-2.5">
+          <i class="bi bi-exclamation-triangle-fill text-red-600 text-sm mt-0.5"></i>
+          <div>
+            <p>Invalid username or password.</p>
+            <p class="font-normal text-red-600 text-[11px] mt-0.5">Please check your credentials or contact the IT registrar.</p>
+          </div>
+        </div>
+      {% endif %}
+
+      <!-- Login Form -->
+      <form method="post" action="{% url 'login' %}" class="space-y-5">
+        {% csrf_token %}
+
+        <!-- Preserves the redirect page if accessing protected directory -->
+        {% if request.GET.next %}
+          <input type="hidden" name="next" value="{{ request.GET.next }}">
+        {% endif %}
+
+        <!-- Username Field -->
+        <div>
+          <label for="id_username" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+            Staff Username / Employee ID
+          </label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <i class="bi bi-person-fill"></i>
+            </span>
+            <input 
+              type="text" 
+              name="username" 
+              id="id_username" 
+              required 
+              autofocus
+              placeholder="e.g. staff_admin"
+              class="w-full text-xs font-semibold pl-10 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:bg-white transition"
+            >
+          </div>
+        </div>
+
+        <!-- Password Field with Show/Hide Toggle -->
+        <div>
+          <label for="id_password" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+            Password
+          </label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <i class="bi bi-key-fill"></i>
+            </span>
+            <input 
+              type="password" 
+              name="password" 
+              id="id_password" 
+              required 
+              placeholder="••••••••••••"
+              class="w-full text-xs font-semibold pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:bg-white transition"
+            >
+            <button 
+              type="button" 
+              onclick="togglePassword()"
+              class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none"
+            >
+              <i class="bi bi-eye-fill" id="pwdToggleIcon"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button 
+          type="submit" 
+          class="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-md shadow-red-600/20 transition flex items-center justify-center gap-2"
+        >
+          <i class="bi bi-box-arrow-in-right text-sm"></i>
+          <span>Sign In to Dashboard</span>
+        </button>
+
+      </form>
+
+      <!-- Security Notice -->
+      <div class="mt-6 pt-6 border-t border-slate-100 text-center">
+        <p class="text-[11px] text-slate-400 flex items-center justify-center gap-1.5">
+          <i class="bi bi-lock-fill text-slate-500"></i>
+          Authorized academic staff and administration only.
+        </p>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<script>
+  function togglePassword() {
+    const input = document.getElementById('id_password');
+    const icon = document.getElementById('pwdToggleIcon');
+    if (input.type === 'password') {
+      input.type = 'text';
+      icon.classList.remove('bi-eye-fill');
+      icon.classList.add('bi-eye-slash-fill');
+    } else {
+      input.type = 'password';
+      icon.classList.remove('bi-eye-slash-fill');
+      icon.classList.add('bi-eye-fill');
+    }
+  }
+</script>
+{% endblock %}
