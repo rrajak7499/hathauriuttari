@@ -44,9 +44,20 @@ class StaffProfile(models.Model):
         ('teacher', 'Teacher / Faculty'),
         ('clerk', 'Administrative Clerk'),
     ]
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='staff_profile')
+    user = models.OneToOneField(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='staff_profile'
+    )
     employee_code = models.CharField(max_length=30, unique=True, db_index=True)
     role = models.CharField(max_length=30, choices=ROLE_CHOICES, default='teacher')
+    enployee_name = models.CharField(max_length=50, null=False, blank=False,)
+    
+    # Optional picture field:
+    photo = models.ImageField(upload_to='staff_photos/', blank=True, null=True)
+    
     contact_phone = models.CharField(max_length=20)
     qualification = models.CharField(max_length=120, blank=True, help_text="e.g. M.Sc. (Math), B.Ed.")
     joining_date = models.DateField()
@@ -56,8 +67,20 @@ class StaffProfile(models.Model):
         ordering = ['employee_code']
 
     def __str__(self):
-        return f"{self.user.get_full_name() or self.user.username} ({self.get_role_display()})"
+        if self.user:
+            display_name = self.user.get_full_name() or self.user.username
+        else:
+            # If no user account is linked, use employee_name or employee_code
+            display_name = getattr(self, 'employee_name', None) or getattr(self, 'enployee_name', None) or self.employee_code
 
+        return f"{display_name} ({self.get_role_display()})"
+
+    @property
+    def photo_url(self):
+        """Safely returns the photo URL if uploaded, otherwise returns None."""
+        if self.photo and hasattr(self.photo, 'url'):
+            return self.photo.url
+        return None
 
 class OfficialNotice(models.Model):
     AUDIENCE_CHOICES = [

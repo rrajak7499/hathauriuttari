@@ -21,7 +21,7 @@ from .models import (
     FacultyMember,  
     Subject
 )
-from core.models import AcademicSession
+from core.models import AcademicSession, StaffProfile
 from students.models import Student, StudentEnrollment
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User, Permission
@@ -81,7 +81,10 @@ def about(request):
 @login_required
 def faculty_view(request):
     headmaster = FacultyMember.objects.filter(designation='HM', is_active=True).first()
-    faculty_list = FacultyMember.objects.filter(is_active=True).order_by('order', 'name')
+    faculty_list = StaffProfile.objects.filter(
+        is_active_faculty=True
+    ).select_related('user').order_by('employee_code')
+
     return render(request, 'academics/faculty.html', {
         'headmaster': headmaster,
         'faculty_list': faculty_list,
@@ -113,10 +116,12 @@ def notices_view(request):
 
     # 4. Order by publish date and created date
     notices_qs = notices_qs.order_by('-publish_date', '-created_at')
-
+    faculty_list = StaffProfile.objects.filter(is_active_faculty=True).select_related('user')
+    
     return render(request, 'academics/notices.html', {
         'notices': notices_qs,
         'priorities': getattr(Notice, 'PRIORITY_CHOICES', []),
+        'faculty_list': faculty_list,
         'selected_priority': selected_priority,
         'search_query': query,
         'is_admin': is_admin,
