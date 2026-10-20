@@ -12,11 +12,10 @@
       </div>
       <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Classes, Sections &amp; Streams</h1>
       <p class="text-xs sm:text-sm text-slate-500 font-medium max-w-2xl">
-        Manage permanent academic grade tiers (9th&ndash;12th), configure sections, and track active sessions without duplicating structures.
+        Manage permanent academic grade tiers (9th&ndash;12th), configure sections, and track active sessions without duplicating structures.[cite: 12]
       </p>
     </div>
 
-    <!-- Quick Stats -->
     <!-- Quick Stats -->
     <div class="grid grid-cols-3 gap-3.5 shrink-0 z-10">
       <div class="px-5 py-3 bg-slate-50/80 border border-slate-200/70 rounded-2xl text-center shadow-xs">
@@ -36,6 +35,23 @@
     </div>
   </div>
 
+  <!-- Locked Session Notification Bar -->
+  {% if active_session and not active_session.allow_modifications %}
+    <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center gap-3 text-amber-800 shadow-xs">
+      <div class="w-9 h-9 rounded-xl bg-amber-100 border border-amber-200 flex items-center justify-center shrink-0 text-amber-700">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+        </svg>
+      </div>
+      <div class="space-y-0.5">
+        <div class="text-xs font-black uppercase tracking-wider text-amber-900">Session Locked (Read-Only)</div>
+        <p class="text-xs text-amber-700">
+          Modifications are currently disabled for <strong>{{ active_session.name }}</strong>. Adding, editing, deleting classes/sections or admitting new students is locked.
+        </p>
+      </div>
+    </div>
+  {% endif %}
+
   <!-- 2. Academic Session Selector Strip -->
   <div class="bg-white border border-slate-200/90 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
     <div class="flex items-center gap-3 w-full sm:w-auto">
@@ -44,19 +60,22 @@
         <select name="session" onchange="this.form.submit()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-slate-900 outline-hidden">
           {% for sess in sessions %}
             <option value="{{ sess.id }}" {% if active_session and sess.id == active_session.id %}selected{% endif %}>
-              Academic Session {{ sess.name }}
+              Academic Session {{ sess.name }} {% if not sess.allow_modifications %}🔒 (Locked){% endif %}
             </option>
           {% empty %}
             <option value="">No Session Created</option>
           {% endfor %}
         </select>
       </form>
-      <button type="button" onclick="openModal('modalCreateSession')" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold uppercase rounded-xl tracking-wider transition-all cursor-pointer">
-        + New Session
-      </button>
+
+      {% if active_session.allow_modifications %}
+        <button type="button" onclick="openModal('modalCreateSession')" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold uppercase rounded-xl tracking-wider transition-all cursor-pointer">
+          + New Session
+        </button>
+      {% endif %}
     </div>
 
-    {% if not is_initialized %}
+    {% if not is_initialized and active_session.allow_modifications %}
     <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
       <form method="post" class="inline" onsubmit="return confirm('Initialize standard 9th–12th structure for this session?');">
         {% csrf_token %}
@@ -113,23 +132,33 @@
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
         Student List
       </a>
-      <a href="{% url 'student_create' %}" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-xs transition-all">
-        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
-        + Admit Student
-      </a>
-      <button type="button" onclick="openModal('modalCreateClass')" class="px-3.5 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-xl text-xs font-bold uppercase tracking-wider shadow-xs transition-all cursor-pointer">
-        + Class
-      </button>
-      <button type="button" onclick="toggleDrawer('drawerSection')" class="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-xs transition-all cursor-pointer">
-        + Section
-      </button>
-      <button type="button" onclick="toggleDrawer('drawerStream')" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-xs transition-all cursor-pointer">
-        + Stream
-      </button>
+
+      <!-- Guarded Modification Buttons -->
+      {% if active_session.allow_modifications %}
+        <a href="{% url 'student_create' %}" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-xs transition-all">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+          + Admit Student
+        </a>
+        <button type="button" onclick="openModal('modalCreateClass')" class="px-3.5 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-xl text-xs font-bold uppercase tracking-wider shadow-xs transition-all cursor-pointer">
+          + Class
+        </button>
+        <button type="button" onclick="toggleDrawer('drawerSection')" class="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-xs transition-all cursor-pointer">
+          + Section
+        </button>
+        <button type="button" onclick="toggleDrawer('drawerStream')" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-xs transition-all cursor-pointer">
+          + Stream
+        </button>
+      {% else %}
+        <span class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-slate-100 text-slate-400 border border-slate-200 rounded-xl text-xs font-bold uppercase tracking-wider cursor-not-allowed">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+          Structure Locked
+        </span>
+      {% endif %}
     </div>
   </div>
 
-  <!-- 5. DRAWER: CREATE SECTION -->
+  <!-- 5. DRAWER: CREATE SECTION (Only if allowed) -->
+  {% if active_session.allow_modifications %}
   <div id="drawerSection" class="hidden bg-white border border-rose-200 rounded-3xl p-6 sm:p-7 shadow-xl shadow-rose-500/5 transition-all">
     <div class="flex justify-between items-center pb-3 mb-5 border-b border-slate-100">
       <div>
@@ -184,8 +213,10 @@
       </div>
     </form>
   </div>
+  {% endif %}
 
-  <!-- 6. DRAWER: CREATE STREAM -->
+  <!-- 6. DRAWER: CREATE STREAM (Only if allowed) -->
+  {% if active_session.allow_modifications %}
   <div id="drawerStream" class="hidden bg-white border border-blue-200 rounded-3xl p-6 sm:p-7 shadow-xl shadow-blue-500/5 transition-all">
     <div class="flex justify-between items-center pb-3 mb-4 border-b border-slate-100">
       <div>
@@ -233,6 +264,7 @@
       </div>
     </form>
   </div>
+  {% endif %}
 
   <!-- 7. TAB 1: CLASSES & SECTIONS MATRIX -->
   <div id="viewClasses" class="space-y-4">
@@ -245,9 +277,11 @@
                 <div class="space-y-0.5">
                   <div class="flex items-center gap-2">
                     <h3 class="font-black text-slate-900 text-base">{{ c.name }}</h3>
-                    <button type="button" onclick="openEditClassModal('{{ c.id }}', '{{ c.numeric_level }}', '{{ c.name|escapejs }}', {{ c.is_intermediate|yesno:'true,false' }})" class="text-slate-400 hover:text-blue-600 transition-colors" title="Edit Class">
-                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                    </button>
+                    {% if active_session.allow_modifications %}
+                      <button type="button" onclick="openEditClassModal('{{ c.id }}', '{{ c.numeric_level }}', '{{ c.name|escapejs }}', {{ c.is_intermediate|yesno:'true,false' }})" class="text-slate-400 hover:text-blue-600 transition-colors" title="Edit Class">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                      </button>
+                    {% endif %}
                   </div>
                   <span class="inline-flex text-[10px] font-bold uppercase tracking-wider text-slate-400">
                     {% if c.is_intermediate %}Senior Secondary (+2){% else %}Secondary Foundation{% endif %}
@@ -258,9 +292,11 @@
                   <span class="text-xs font-bold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600">
                     {{ c.active_sections_count }} Section{{ c.active_sections_count|pluralize }}
                   </span>
-                  <button type="button" onclick="confirmDelete('class', '{{ c.id }}', '{{ c.name|escapejs }}')" class="text-slate-300 hover:text-rose-600 p-1 transition-colors" title="Delete Class">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                  </button>
+                  {% if active_session.allow_modifications %}
+                    <button type="button" onclick="confirmDelete('class', '{{ c.id }}', '{{ c.name|escapejs }}')" class="text-slate-300 hover:text-rose-600 p-1 transition-colors" title="Delete Class">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    </button>
+                  {% endif %}
                 </div>
               </div>
 
@@ -288,12 +324,14 @@
                       <a href="{% url 'student_list' %}?grade={{ c.numeric_level }}" class="p-1 text-slate-400 hover:text-emerald-600 rounded-md hover:bg-emerald-50 transition-colors" title="View Students">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
                       </a>
-                      <button type="button" onclick="openEditSectionModal('{{ sec.id }}', '{{ sec.name|escapejs }}', '{{ sec.stream.id|default:'' }}', '{{ sec.capacity }}', '{{ sec.room_number|default:''|escapejs }}', '{{ c.name|escapejs }}', '{{ c.id }}')" class="p-1 text-slate-400 hover:text-blue-600 rounded-md hover:bg-blue-50 transition-colors" title="Edit Section">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                      </button>
-                      <button type="button" onclick="confirmDelete('section', '{{ sec.id }}', 'Section {{ sec.name }} ({{ c.name|escapejs }})')" class="p-1 text-slate-400 hover:text-rose-600 rounded-md hover:bg-rose-50 transition-colors" title="Delete Section">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                      </button>
+                      {% if active_session.allow_modifications %}
+                        <button type="button" onclick="openEditSectionModal('{{ sec.id }}', '{{ sec.name|escapejs }}', '{{ sec.stream.id|default:'' }}', '{{ sec.capacity }}', '{{ sec.room_number|default:''|escapejs }}', '{{ c.name|escapejs }}', '{{ c.id }}')" class="p-1 text-slate-400 hover:text-blue-600 rounded-md hover:bg-blue-50 transition-colors" title="Edit Section">
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                        </button>
+                        <button type="button" onclick="confirmDelete('section', '{{ sec.id }}', 'Section {{ sec.name }} ({{ c.name|escapejs }})')" class="p-1 text-slate-400 hover:text-rose-600 rounded-md hover:bg-rose-50 transition-colors" title="Delete Section">
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        </button>
+                      {% endif %}
                     </div>
                   </div>
                 {% empty %}
@@ -309,7 +347,7 @@
     {% else %}
       <div class="text-center py-16 bg-white border border-dashed border-slate-300 rounded-3xl p-8 space-y-3">
         <h4 class="text-base font-bold text-slate-800">No Academic Classes Found</h4>
-        <p class="text-xs text-slate-500 max-w-sm mx-auto">Click initialize above or create classes manually.</p>
+        <p class="text-xs text-slate-500 max-w-sm mx-auto">Click initialize above or create classes manually.[cite: 12]</p>
       </div>
     {% endif %}
   </div>
@@ -327,7 +365,9 @@
                 <th class="p-4">Code</th>
                 <th class="p-4">Approved Quota</th>
                 <th class="p-4">Description</th>
-                <th class="p-4 text-right">Actions</th>
+                {% if active_session.allow_modifications %}
+                  <th class="p-4 text-right">Actions</th>
+                {% endif %}
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100 font-medium">
@@ -342,16 +382,18 @@
                   <td class="p-4 font-mono font-bold text-blue-600">{{ s.code }}</td>
                   <td class="p-4 font-bold text-slate-800">{{ s.sanctioned_seats }} Seats</td>
                   <td class="p-4 text-slate-500 max-w-xs truncate">{{ s.description|default:"—" }}</td>
-                  <td class="p-4 text-right">
-                    <div class="inline-flex items-center gap-1.5">
-                      <button type="button" onclick="openEditStreamModal('{{ s.id }}', '{{ s.name|escapejs }}', '{{ s.code|escapejs }}', '{{ s.faculty|escapejs }}', '{{ s.sanctioned_seats }}', '{{ s.description|default:''|escapejs }}')" class="p-1.5 text-slate-400 hover:text-blue-600 rounded-md hover:bg-blue-50 transition-colors">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                      </button>
-                      <button type="button" onclick="confirmDelete('stream', '{{ s.id }}', 'Stream {{ s.name|escapejs }}')" class="p-1.5 text-slate-400 hover:text-rose-600 rounded-md hover:bg-rose-50 transition-colors">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                      </button>
-                    </div>
-                  </td>
+                  {% if active_session.allow_modifications %}
+                    <td class="p-4 text-right">
+                      <div class="inline-flex items-center gap-1.5">
+                        <button type="button" onclick="openEditStreamModal('{{ s.id }}', '{{ s.name|escapejs }}', '{{ s.code|escapejs }}', '{{ s.faculty|escapejs }}', '{{ s.sanctioned_seats }}', '{{ s.description|default:''|escapejs }}')" class="p-1.5 text-slate-400 hover:text-blue-600 rounded-md hover:bg-blue-50 transition-colors">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                        </button>
+                        <button type="button" onclick="confirmDelete('stream', '{{ s.id }}', 'Stream {{ s.name|escapejs }}')" class="p-1.5 text-slate-400 hover:text-rose-600 rounded-md hover:bg-rose-50 transition-colors">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        </button>
+                      </div>
+                    </td>
+                  {% endif %}
                 </tr>
               {% endfor %}
             </tbody>
@@ -361,16 +403,19 @@
     {% else %}
       <div class="text-center py-16 bg-white border border-dashed border-slate-300 rounded-3xl p-8 space-y-3">
         <h4 class="text-base font-bold text-slate-800">No Streams Configured</h4>
-        <button type="button" onclick="toggleDrawer('drawerStream')" class="inline-flex px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold uppercase tracking-wider">
-          + Add Stream
-        </button>
+        {% if active_session.allow_modifications %}
+          <button type="button" onclick="toggleDrawer('drawerStream')" class="inline-flex px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold uppercase tracking-wider">
+            + Add Stream
+          </button>
+        {% endif %}
       </div>
     {% endif %}
   </div>
 
 </div>
 
-<!-- MODALS -->
+<!-- MODALS (Rendered only when active_session.allow_modifications is True) -->
+{% if active_session.allow_modifications %}
 
 <!-- 1. CREATE ACADEMIC SESSION MODAL -->
 <div id="modalCreateSession" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 hidden transition-opacity">
@@ -583,6 +628,7 @@
     </form>
   </div>
 </div>
+{% endif %}
 
 <script>
   const ACTIVE_CLASS = 'px-4 py-2 rounded-lg bg-white text-slate-900 shadow-xs transition-all cursor-pointer font-bold';
@@ -604,9 +650,18 @@
     switchTab(savedTab);
   });
 
-  function toggleDrawer(id) { document.getElementById(id).classList.toggle('hidden'); }
-  function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
-  function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+  function toggleDrawer(id) { 
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('hidden'); 
+  }
+  function openModal(id) { 
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('hidden'); 
+  }
+  function closeModal(id) { 
+    const el = document.getElementById(id);
+    if (el) el.classList.add('hidden'); 
+  }
 
   function openEditClassModal(id, level, name, isInter) {
     document.getElementById('editClassId').value = id;

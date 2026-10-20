@@ -14,6 +14,8 @@ from .imagekit_client import upload_to_imagekit, delete_from_imagekit
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 from django.http import JsonResponse
+# academics/views.py
+
 from .models import (
     AcademicClass, 
     Stream, 
@@ -21,7 +23,7 @@ from .models import (
     FacultyMember,  
     Subject
 )
-from core.models import AcademicSession
+from core.models import AcademicSession, StaffProfile
 from students.models import Student, StudentEnrollment
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User, Permission
