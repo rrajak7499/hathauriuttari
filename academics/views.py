@@ -21,7 +21,7 @@ from .models import (
     FacultyMember,  
     Subject
 )
-from core.models import AcademicSession, StaffProfile
+from core.models import AcademicSession
 from students.models import Student, StudentEnrollment
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User, Permission
@@ -80,15 +80,29 @@ def about(request):
 
 @login_required
 def faculty_view(request):
-    headmaster = FacultyMember.objects.filter(designation='HM', is_active=True).first()
-    faculty_list = StaffProfile.objects.filter(
-        is_active_faculty=True
-    ).select_related('user').order_by('employee_code')
+    # 1. Look for a Headmaster / Principal specifically
+    headmaster = FacultyMember.objects.filter(
+        Q(designation__iexact='HM') |
+        Q(designation__icontains='Headmaster') |
+        Q(designation__icontains='Principal'),
+        is_active=True
+    ).first()
+
+    # 2. Get teaching faculty (all active faculty members)
+    faculty_list = FacultyMember.objects.filter(is_active=True)
+    
+    # If a headmaster exists, exclude them from the regular teachers list
+    if headmaster:
+        faculty_list = faculty_list.exclude(id=headmaster.id)
+
+    # Order by display order or name
+    faculty_list = faculty_list.order_by('order', 'name')
 
     return render(request, 'academics/faculty.html', {
         'headmaster': headmaster,
         'faculty_list': faculty_list,
     })
+
 
 def notices_view(request):
     selected_priority = (request.GET.get('priority') or '').strip()

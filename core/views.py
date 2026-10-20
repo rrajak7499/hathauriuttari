@@ -54,11 +54,6 @@ def about(request):
     return render(request, 'about.html')
 
 
-
-# def contact(request):
-#     # Add form handling/POST logic here if required
-#     return render(request, 'contact.html')
-
 def contact(request):
     contact = SchoolContactInfo.objects.first()
     return render(request, 'contact.html', {'contact': contact})

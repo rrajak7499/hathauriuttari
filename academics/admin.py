@@ -63,14 +63,14 @@ class SectionAdmin(admin.ModelAdmin):
 
 @admin.register(FacultyMember)
 class FacultyMemberAdmin(admin.ModelAdmin):
-    list_display = ('avatar_preview', 'name', 'designation', 'category', 'qualification', 'order', 'is_active')
+    list_display = ('avatar_preview', 'name', 'designation', 'category', 'qualification', 'contact_number', 'order', 'is_active')
     list_filter = ('designation', 'category', 'is_active')
     search_fields = ('name', 'qualification')
     list_editable = ('order', 'is_active')
     ordering = ('order', 'name')
     fieldsets = (
         ('Basic Information', {
-            'fields': ('name', 'designation', 'category', 'qualification', 'is_active', 'order')
+            'fields': ('name', 'designation', 'category', 'qualification', 'contact_number', 'is_active', 'order')
         }),
         ('Photo & Media', {
             'fields': ('photo', 'photo_url')

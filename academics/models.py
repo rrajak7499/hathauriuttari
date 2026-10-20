@@ -142,6 +142,7 @@ class FacultyMember(models.Model):
     photo_url = models.URLField(blank=True, default='', help_text="Fallback external URL if no uploaded photo")
     message = models.TextField(blank=True, default='', help_text="Principal/HM desk message")
     order = models.PositiveIntegerField(default=0, help_text="Display priority order")
+    contact_number = models.CharField(max_length=10)
     is_active = models.BooleanField(default=True)
 
     class Meta:

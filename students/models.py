@@ -1,19 +1,8 @@
+# students/models.py
 from django.db import models
 from django.utils import timezone
-from academics.models import Section, Subject, AcademicSession  # Keep this single source of truth
+from academics.models import Section, Subject, AcademicSession  # Single source of truth[cite: 7]
 
-class AcademicSession(models.Model):
-    name = models.CharField(max_length=50, unique=True)
-    start_date = models.DateField()
-    end_date = models.DateField()
-    is_current = models.BooleanField(default=False)
-    allow_modifications = models.BooleanField(
-        default=True,
-        help_text="If disabled, student details cannot be added, edited, or deleted for this session."
-    )
-
-    def __str__(self):
-        return self.name
 
 class Student(models.Model):
     GENDER_CHOICES = [
@@ -74,11 +63,12 @@ class StudentEnrollment(models.Model):
     ]
 
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='enrollments')
+    # Refers to the AcademicSession imported from academics.models[cite: 7]
     session = models.ForeignKey(AcademicSession, on_delete=models.PROTECT, related_name='enrollments')
     section = models.ForeignKey(Section, on_delete=models.PROTECT, related_name='enrollments')
     roll_number = models.PositiveIntegerField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
-    is_informed = models.BooleanField(default=False)  # <--- NEW FIELD
+    is_informed = models.BooleanField(default=False)
     informed_at = models.DateTimeField(null=True, blank=True)
     enrolled_at = models.DateTimeField(auto_now_add=True)
 

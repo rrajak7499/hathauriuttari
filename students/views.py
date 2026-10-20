@@ -249,13 +249,9 @@ def student_detail(request, pk):
     })
 
 
-@login_required
 def student_create(request):
+    # Ensure active_session is an instance
     active_session = AcademicSession.objects.filter(is_current=True).first()
-
-    if not active_session:
-        messages.error(request, "No active academic session found. Please activate one in Academic Settings.")
-        return redirect('student_list')
 
     if request.method == 'POST':
         form = StudentEnrollmentForm(request.POST, request.FILES)
@@ -269,7 +265,6 @@ def student_create(request):
     return render(request, 'students/student_form.html', {
         'form': form,
         'active_session': active_session,
-        'is_edit': False,
     })
 
 

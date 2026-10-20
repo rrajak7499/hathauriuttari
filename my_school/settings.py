@@ -81,19 +81,19 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'my_school.wsgi.application'
 # Parse DEBUG safely as a boolean
-DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 'yes')
-
 DATABASE_URL = os.getenv('DATABASE_URL')
 
-if DATABASE_URL and DATABASE_URL.strip():
+if DATABASE_URL and DATABASE_URL.startswith(('postgres://', 'postgresql://')):
+    # Production / Cloud Database (PostgreSQL)
     DATABASES = {
-        'default': dj_database_url.parse(
-            DATABASE_URL,
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
             conn_max_age=600,
             ssl_require=True,
         )
     }
 else:
+    # Local Development Database (SQLite - completely ignores any bad environment variables)
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
