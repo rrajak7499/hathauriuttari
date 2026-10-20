@@ -7,6 +7,7 @@ from .models import (
 )
 from django.contrib import admin
 from django.utils.html import format_html
+from .models import SchoolConfiguration, HeroBanner
 
 # @admin.register(AcademicSession)
 # class AcademicSessionAdmin(admin.ModelAdmin):
@@ -85,3 +86,55 @@ class ProspectiveAdmissionApplicationAdmin(admin.ModelAdmin):
     @admin.display(description='Submission Date')
     def submission_date_formatted(self, obj):
         return obj.submission_date.strftime('%d/%m/%Y') if obj.submission_date else '-'
+
+@admin.register(SchoolConfiguration)
+class SchoolConfigurationAdmin(admin.ModelAdmin):
+    def has_add_permission(self, request):
+        return not SchoolConfiguration.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    fieldsets = (
+        ("School Basic Identity", {
+            "fields": (
+                "school_name", "short_name", 
+                ("school_name_part_1", "school_name_part_2"),
+                ("board_affiliation", "subdomain_slug"),
+            )
+        }),
+        ("Contact & Location Details", {
+            "fields": (
+                ("primary_phone", "email"),
+                ("headmaster_contact_no", "clerk_contact_no"),
+                "office_hours",
+                "address",
+                ("map_location_query", "map_coordinates"),
+                "map_location_iframe",
+            )
+        }),
+        ("Headmaster's Profile & Welcome Message", {
+            "fields": (
+                ("hm_name", "hm_designation"),
+                ("hm_qualifications", "hm_experience"),
+                ("hm_email", "hm_image_url"),
+                "hm_message_lead",
+                "hm_message_body",
+            )
+        }),
+    )
+
+
+@admin.register(HeroBanner)
+class HeroBannerAdmin(admin.ModelAdmin):
+    list_display = ('title', 'order', 'is_active')
+    list_editable = ('order', 'is_active')
+    search_fields = ('title',)
+
+
+
+
+
+
+
+

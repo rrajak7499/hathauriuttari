@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Downloads &amp; Public Dossiers | {{ school_cfg.short_name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+
+  <!-- Header -->
+  <div class="text-center max-w-2xl mx-auto mb-10 space-y-2">
+    <span class="text-xs font-black uppercase tracking-widest text-indigo-700 bg-indigo-50 border border-indigo-200/80 px-3.5 py-1 rounded-full">
+      Institutional Archive
+    </span>
+    <h1 class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">Downloads &amp; Official Forms</h1>
+    <p class="text-xs sm:text-sm text-slate-500">
+      Official application blanks, curriculum syllabi, and migration dossiers for {{ school_cfg.school_name }}.
+    </p>
+  </div>
+
+  <!-- Downloads Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for doc in downloads %}
+      <div class="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-sm hover:shadow-md transition flex flex-col justify-between space-y-4">
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600">
+              {{ doc.get_category_display }}
+            </span>
+            <i class="bi bi-file-earmark-pdf-fill text-red-500 text-xl"></i>
+          </div>
+          <h3 class="text-base font-bold text-slate-900 leading-snug">{{ doc.title }}</h3>
+          <p class="text-xs text-slate-500 leading-relaxed">{{ doc.description }}</p>
+        </div>
+
+        <a href="{{ doc.drive_link }}" target="_blank" rel="noopener noreferrer" 
+           class="inline-flex items-center justify-center gap-2 w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition">
+          <i class="bi bi-download"></i> Download Form
+        </a>
+      </div>
+    {% empty %}
+      <div class="col-span-full py-16 text-center text-slate-400 bg-white border border-dashed rounded-2xl">
+        <i class="bi bi-folder-x text-4xl block mb-2 text-slate-300"></i>
+        <p class="text-sm font-bold text-slate-700">No downloadable dossiers published yet.</p>
+      </div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}

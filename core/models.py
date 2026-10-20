@@ -190,5 +190,83 @@ class GalleryImage(models.Model):
         return f"{self.title} ({self.category.name})"
 
 
+class SingletonModel(models.Model):
+    """Abstract singleton model ensuring only one active config record exists in DB."""
+    class Meta:
+        abstract = True
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        pass  # Prevent accidental deletion
+
+    @classmethod
+    def load(cls):
+        obj, created = cls.objects.get_or_create(pk=1)
+        return obj
+
+
+class SchoolConfiguration(SingletonModel):
+    # School Identity & Contact Info
+    school_name = models.CharField(max_length=200, default="Uchcha Madhyamic Vidyalaya Hathauri Uttari")
+    short_name = models.CharField(max_length=100, default="U.M.V. Hathauri Uttari")
+    school_name_part_1 = models.CharField(max_length=100, default="Uchcha Madhyamic Vidyalaya")
+    school_name_part_2 = models.CharField(max_length=100, default="Hathauri Uttari")
+    board_affiliation = models.CharField(max_length=100, default="BSEB Patna")
+    subdomain_slug = models.SlugField(max_length=100, default="hathauri-uttari")
+    address = models.TextField(default="Uchcha Madhyamic Vidyalaya Hathauri Uttari, Kothra, Baheri, Darbhanga, Bihar - 847105")
+    primary_phone = models.CharField(max_length=20, default="+91 9110962641")
+    email = models.EmailField(default="principal@umvhathauri.edu.in")
+    office_hours = models.CharField(max_length=120, default="Monday – Saturday: 9:00 AM – 4:00 PM")
+
+    # Specific Contacts
+    headmaster_contact_no = models.CharField(max_length=20, default="+91-9110962641")
+    clerk_contact_no = models.CharField(max_length=20, default="+91-7079192999")
+
+    # Map Settings
+    map_location_query = models.CharField(max_length=255, default="Uchcha Madhyamic Vidyalaya Hathauri Uttari Baheri Darbhanga")
+    map_coordinates = models.CharField(max_length=100, default="25.97133354435404, 85.9963287249768")
+    map_location_iframe = models.TextField(blank=True, default="")
+
+    # Headmaster's Profile & Welcome Message
+    hm_name = models.CharField(max_length=150, default="Raman Jee Ray")
+    hm_designation = models.CharField(max_length=100, default="Headmaster")
+    hm_qualifications = models.CharField(max_length=150, default="M.Sc. (Physics), M.Ed, Ph.D.")
+    hm_image_url = models.URLField(max_length=500, blank=True, default="https://i.postimg.cc/L5BS9BLw/hm.png")
+    hm_experience = models.CharField(max_length=150, default="7+ Years in Educational Administration")
+    hm_email = models.EmailField(default="principal@umvhathauri.edu.in")
+    hm_message_lead = models.CharField(max_length=255, default="Guiding young minds through holistic education, academic discipline, and values.")
+    hm_message_body = models.TextField(default="At Uchcha Madhyamic Vidyalaya Hathauri Uttari, we believe that true education transcends beyond the boundaries of textbooks...")
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "School Portal Configuration"
+        verbose_name_plural = "School Portal Configuration"
+
+    def __str__(self):
+        return f"{self.school_name} (Global Settings)"
+
+
+class HeroBanner(models.Model):
+    title = models.CharField(max_length=200)
+    subtitle = models.CharField(max_length=255, blank=True, default="")
+    image_url = models.URLField(max_length=500)
+    order = models.PositiveIntegerField(default=1)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['order']
+        verbose_name = "Hero Banner"
+        verbose_name_plural = "Hero Banners"
+
+    def __str__(self):
+        return self.title
+
+
+
+
 
     

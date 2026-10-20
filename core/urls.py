@@ -27,6 +27,7 @@ urlpatterns = [
     # path('notices/', views.notice_board_view, name='notice_board'),
     # path('downloads/', views.forms_downloads_view, name='forms_downloads'),
     path('gallery/', academics_view.gallery_view, name='gallery'),
+    path('portal/', views.portal_home_view, name='portal_home'),
 
     
     # -------------------------------------------------------------

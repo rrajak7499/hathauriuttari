@@ -13,6 +13,7 @@ from django.views.decorators.http import require_POST
 from django.http import JsonResponse
 # IMPORT FROM ACADEMICS APP HERE:
 from academics.models import GalleryCategory, GalleryImage
+from .models import HeroBanner
 
 
 def apply_admission_view(request):
@@ -57,3 +58,16 @@ def about(request):
 def contact(request):
     contact = SchoolContactInfo.objects.first()
     return render(request, 'contact.html', {'contact': contact})
+
+def portal_home_view(request):
+    return render(request, 'home.html')
+
+
+
+
+
+
+
+
+
+
