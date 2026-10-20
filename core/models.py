@@ -227,7 +227,7 @@ class SchoolConfiguration(SingletonModel):
 
     # Map Settings
     map_location_query = models.CharField(max_length=255, default="Uchcha Madhyamic Vidyalaya Hathauri Uttari Baheri Darbhanga")
-    map_coordinates = models.CharField(max_length=100, default="25.97133354435404, 85.9963287249768")
+    map_coordinates = models.CharField(max_length=100, default="")
     map_location_iframe = models.TextField(blank=True, default="")
 
     # Headmaster's Profile & Welcome Message
@@ -236,7 +236,7 @@ class SchoolConfiguration(SingletonModel):
     hm_qualifications = models.CharField(max_length=150, default="M.Sc. (Physics), M.Ed, Ph.D.")
     hm_image_url = models.URLField(max_length=500, blank=True, default="https://i.postimg.cc/L5BS9BLw/hm.png")
     hm_experience = models.CharField(max_length=150, default="7+ Years in Educational Administration")
-    hm_email = models.EmailField(default="principal@umvhathauri.edu.in")
+    hm_email = models.EmailField(default="")
     hm_message_lead = models.CharField(max_length=255, default="Guiding young minds through holistic education, academic discipline, and values.")
     hm_message_body = models.TextField(default="At Uchcha Madhyamic Vidyalaya Hathauri Uttari, we believe that true education transcends beyond the boundaries of textbooks...")
 
