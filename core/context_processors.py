@@ -16,6 +16,7 @@ def academic_session_context(request):
     }
 
 
+
 def school_settings(request):
     """
     Context processor required by settings.py.

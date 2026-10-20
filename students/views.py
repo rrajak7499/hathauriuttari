@@ -249,24 +249,42 @@ def student_detail(request, pk):
     })
 
 
+@login_required
 def student_create(request):
-    # Ensure active_session is an instance
+    # 1. Fetch current active session instance[cite: 7]
     active_session = AcademicSession.objects.filter(is_current=True).first()
 
+    # 2. Guard: Active session must exist
+    if not active_session:
+        messages.error(request, "No active academic session found. Please activate an academic session first.")
+        return redirect('student_list')
+
+    # 3. Guard: Active session must permit new enrollments/modifications[cite: 7]
+    if hasattr(active_session, 'allow_modifications') and not active_session.allow_modifications:
+        messages.error(request, f"Academic Session '{active_session.name}' is locked. Adding new students is disabled.")
+        return redirect('student_list')
+
+    # 4. Handle Form Submission
     if request.method == 'POST':
         form = StudentEnrollmentForm(request.POST, request.FILES)
         if form.is_valid():
-            student = form.save()
-            messages.success(request, f"Student {student.student_name} enrolled successfully!")
-            return redirect('student_list')
+            try:
+                with transaction.atomic():
+                    student = form.save()
+                messages.success(request, f"Student '{student.student_name}' enrolled successfully!")
+                return redirect('student_list')
+            except Exception as e:
+                messages.error(request, f"An unexpected error occurred while saving enrollment: {e}")
+        else:
+            messages.error(request, "Please resolve the validation errors shown below.")
     else:
         form = StudentEnrollmentForm()
 
     return render(request, 'students/student_form.html', {
         'form': form,
         'active_session': active_session,
+        'is_edit': False,
     })
-
 
 @login_required
 @user_passes_test(is_teacher_or_staff, login_url='login')
@@ -327,42 +345,77 @@ def student_delete(request, pk):
 
 # SINGLE, CLEAN SUBJECT-BY-SECTION API (No duplicates)
 def get_subjects_by_section(request):
-    section_id = request.GET.get('section_id')
-    if not section_id:
-        return JsonResponse({'subjects': [], 'error': 'No section_id provided'})
+  section_id = request.GET.get('section_id')
+  if not section_id:
+    return JsonResponse({'subjects': [], 'error': 'No section_id provided'})
 
-    try:
-        section = Section.objects.select_related('academic_class', 'stream').get(id=section_id)
-    except Section.DoesNotExist:
-        return JsonResponse({'subjects': [], 'error': f'Section {section_id} not found'})
+  try:
+    section = Section.objects.select_related('academic_class', 'stream').get(
+        id=section_id
+    )
+  except Section.DoesNotExist:
+    return JsonResponse(
+        {'subjects': [], 'error': f'Section {section_id} not found'}
+    )
 
-    qs = Subject.objects.filter(academic_class=section.academic_class)
+  ac_class = section.academic_class
+  # Start with subjects strictly belonging to this class
+  qs = Subject.objects.filter(academic_class=ac_class)
 
-    has_stream_attr = any(f.name == 'stream' for f in Subject._meta.get_fields())
-    if has_stream_attr:
-        if section.stream:
-            qs = qs.filter(Q(stream=section.stream) | Q(stream__isnull=True))
-        else:
-            qs = qs.filter(stream__isnull=True)
+  # Check if Class 9 / 10 (Secondary Foundation)
+  is_secondary = (
+      getattr(ac_class, 'numeric_level', None) in [9, 10]
+      or 'IX' in ac_class.name
+      or 'X (' in ac_class.name
+      or not getattr(ac_class, 'is_intermediate', False)
+  )
 
-    data = []
-    for s in qs.order_by('name'):
-        stype = 'General'
-        if hasattr(s, 'get_subject_type_display'):
-            stype = s.get_subject_type_display()
-        elif hasattr(s, 'subject_type') and s.subject_type:
-            stype = str(s.subject_type).title()
+  if is_secondary:
+    # Class 9 & 10 have no stream; strictly get unstreamed subjects
+    qs = qs.filter(stream__isnull=True)
+  else:
+    # Senior Secondary (Class 11 & 12)
+    if section.stream:
+      # Match either the stream foreign key OR the stream code / faculty
+      stream_code = (section.stream.code or '').upper()
+      faculty = (getattr(section.stream, 'faculty', '') or '').upper()
 
-        data.append({
-            'id': s.id,
-            'name': getattr(s, 'name', f'Subject #{s.id}'),
-            'code': getattr(s, 'code', '') or '',
-            'type': stype,
-        })
+      if 'SCI' in stream_code or 'SCI' in faculty:
+        qs = qs.filter(
+            Q(stream=section.stream)
+            | Q(stream__code__icontains='SCI')
+            | Q(stream__faculty__icontains='SCI')
+        )
+      elif 'ART' in stream_code or 'ART' in faculty:
+        qs = qs.filter(
+            Q(stream=section.stream)
+            | Q(stream__code__icontains='ART')
+            | Q(stream__faculty__icontains='ART')
+        )
+      else:
+        qs = qs.filter(
+            Q(stream=section.stream) | Q(stream__isnull=True)
+        )
+    else:
+      # Fallback: If section has no stream set yet, show all subjects for this class
+      pass
 
-    return JsonResponse({'subjects': data, 'count': len(data)})
+  data = []
+  for s in qs.order_by('subject_type', 'code', 'name'):
+    stype = 'General'
+    if hasattr(s, 'get_subject_type_display'):
+      stype = s.get_subject_type_display()
+    elif hasattr(s, 'subject_type') and s.subject_type:
+      stype = str(s.subject_type).title()
 
+    data.append({
+        'id': s.id,
+        'name': getattr(s, 'name', f'Subject #{s.id}'),
+        'code': getattr(s, 'code', '') or '',
+        'type': stype,
+    })
 
+  return JsonResponse({'subjects': data, 'count': len(data)})
 # =====================================================================
 # SESSION PROMOTION & ROLLOVER
 # =====================================================================

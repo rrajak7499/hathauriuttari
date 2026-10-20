@@ -226,11 +226,13 @@
 {{ enrolled_subject_ids|default:"[]"|json_script:"enrolled-subject-ids" }}
 
 <!-- Flatpickr Datepicker & Dynamic Subject Filtering -->
+<!-- Flatpickr Datepicker & Dynamic Subject Filtering -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+  // 1. Initialize Flatpickr in strict DD/MM/YYYY format
   if (typeof flatpickr !== 'undefined') {
     flatpickr('.flatpickr-date', {
       dateFormat: 'd/m/Y',
@@ -238,13 +240,27 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
+  // 2. Identify Elements
   const sectionSelect = document.getElementById('id_section') || document.querySelector('select[name="section"]');
   const subjectGrid = document.getElementById('subject-checkbox-grid');
   const placeholder = document.getElementById('subject-placeholder');
 
+  // 3. Safe parsing for enrolled subject IDs
+  let preselectedSet = new Set();
   const enrolledIdsElement = document.getElementById('enrolled-subject-ids');
-  let rawIds = enrolledIdsElement ? JSON.parse(enrolledIdsElement.textContent) : [];
-  let preselectedSet = new Set(rawIds.map(Number));
+  if (enrolledIdsElement && enrolledIdsElement.textContent.trim()) {
+    try {
+      let parsed = JSON.parse(enrolledIdsElement.textContent);
+      if (typeof parsed === 'string') {
+        parsed = JSON.parse(parsed); // Handles double-encoded JSON string
+      }
+      if (Array.isArray(parsed)) {
+        preselectedSet = new Set(parsed.map(Number));
+      }
+    } catch (e) {
+      console.warn("Could not parse enrolled-subject-ids:", e);
+    }
+  }
 
   function loadSubjects(sectionId, preserveSelected = true) {
     if (!sectionId) {
@@ -306,12 +322,13 @@ document.addEventListener('DOMContentLoaded', function () {
       .catch(err => {
         console.error('Error fetching subjects:', err);
         if (placeholder) {
-          placeholder.textContent = 'Error loading subjects.';
+          placeholder.textContent = 'Error loading subjects. Check browser console.';
           placeholder.classList.remove('hidden');
         }
       });
   }
 
+  // 4. Register event listener and auto-load if pre-selected
   if (sectionSelect) {
     sectionSelect.addEventListener('change', function (e) {
       preselectedSet.clear();
